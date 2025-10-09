@@ -4,7 +4,8 @@ An intelligent command-line assistant with advanced ReAct reasoning, vision capa
 
 ## 🎬 Demo
 
-<video src="https://github.com/William0614/multimodal-cli-agent/raw/main/assets/Multimodal-CLI-Agent-Demo.mp4" controls width="100%">
+<video width="100%" controls>
+  <source src="https://github.com/user-attachments/assets/696c7ec6-9b88-4703-86e0-53422f6bfa35" type="video/mp4">
   Your browser does not support the video tag.
 </video>
 
