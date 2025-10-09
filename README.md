@@ -1,6 +1,6 @@
 # Multimodal CLI Agent
 
-An intelligent command-line assistant with advanced ReAct reasoning, voice input, vision capabilities, and sophisticated memory management.
+An intelligent command-line assistant with ReAct + Reflexion reasoning, voice input, vision capabilities, and sophisticated memory management.
 
 ## 🎬 Demo
 
