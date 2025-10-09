@@ -2,6 +2,8 @@
 
 An intelligent command-line assistant with advanced ReAct reasoning, vision capabilities, and sophisticated memory management.
 
+(https://github.com/William0614/multimodal-cli-agent/blob/main/assets/Multimodal-CLI-Demo.mp4?raw=true)
+
 ## 🚀 Features
 
 ### Core AI Capabilities
