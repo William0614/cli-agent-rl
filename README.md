@@ -4,10 +4,7 @@ An intelligent command-line assistant with advanced ReAct reasoning, vision capa
 
 ## 🎬 Demo
 
-<video width="100%" controls>
-  <source src="https://github.com/user-attachments/assets/696c7ec6-9b88-4703-86e0-53422f6bfa35" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+https://github.com/user-attachments/assets/65cbcf74-d64e-4cb3-8485-dfcdce28988c
 
 ## 🚀 Features
 
