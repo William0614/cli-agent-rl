@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RL Optimization Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .status-item {
+            background: #f7fafc;
+            padding: 10px 20px;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .status-item strong {
+            display: block;
+            color: #667eea;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        
+        .status-item span {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        
+        .training-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: pulse 2s infinite;
+        }
+        
+        .training-indicator.active {
+            background: #48bb78;
+        }
+        
+        .training-indicator.inactive {
+            background: #cbd5e0;
+            animation: none;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .plot-container {
+            width: 100%;
+            text-align: center;
+        }
+        
+        .plot-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+        
+        .best-config {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
+        .best-config h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .param-list {
+            list-style: none;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .param-list li {
+            padding: 5px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .param-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #a0aec0;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .refresh-info {
+            text-align: center;
+            color: #a0aec0;
+            font-size: 0.9em;
+            margin-top: 20px;
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 RL Optimization Dashboard</h1>
+            <p id="workload-name">Loading...</p>
+            <div class="status-bar">
+                <div class="status-item">
+                    <strong>Status</strong>
+                    <span>
+                        <span class="training-indicator" id="training-indicator"></span>
+                        <span id="training-status">Initializing...</span>
+                    </span>
+                </div>
+                <div class="status-item">
+                    <strong>Total Steps</strong>
+                    <span id="total-steps">0</span>
+                </div>
+                <div class="status-item">
+                    <strong>Episodes</strong>
+                    <span id="total-episodes">0</span>
+                </div>
+                <div class="status-item">
+                    <strong>Current Reward</strong>
+                    <span id="current-reward">0.00</span>
+                </div>
+                <div class="status-item">
+                    <strong>Best Reward</strong>
+                    <span id="best-reward">0.00</span>
+                </div>
+                <div class="status-item">
+                    <strong>Runtime</strong>
+                    <span id="runtime">0m 0s</span>
+                </div>
+            </div>
+        </header>
+        
+        <div class="grid">
+            <div class="card full-width">
+                <h2>📈 Learning Curve</h2>
+                <div class="plot-container" id="learning-curve-container">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Waiting for training data...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>⚖️ Performance vs Stability</h2>
+                <div class="plot-container" id="perf-stab-container">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Waiting for data...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>📊 Episode Rewards</h2>
+                <div class="plot-container" id="episode-rewards-container">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Waiting for data...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card full-width">
+                <h2>🎯 Best Configuration</h2>
+                <div class="best-config">
+                    <h3>Step: <span id="best-step">0</span> | Reward: <span id="best-reward-value">0.00</span></h3>
+                    <ul class="param-list" id="best-config-params">
+                        <li>Waiting for optimization results...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="refresh-info">
+            Dashboard updates automatically every 2 seconds
+        </div>
+    </div>
+    
+    <script>
+        // Update dashboard data
+        function updateDashboard() {
+            fetch('/data')
+                .then(response => response.json())
+                .then(data => {
+                    // Update status bar
+                    document.getElementById('workload-name').textContent = data.workload_name || 'RL Optimization';
+                    document.getElementById('total-steps').textContent = data.total_steps.toLocaleString();
+                    document.getElementById('total-episodes').textContent = data.total_episodes;
+                    document.getElementById('current-reward').textContent = data.current_reward.toFixed(2);
+                    document.getElementById('best-reward').textContent = data.best_reward.toFixed(2);
+                    document.getElementById('runtime').textContent = data.runtime;
+                    
+                    // Update training status
+                    const indicator = document.getElementById('training-indicator');
+                    const status = document.getElementById('training-status');
+                    if (data.is_training) {
+                        indicator.className = 'training-indicator active';
+                        status.textContent = 'Training';
+                    } else {
+                        indicator.className = 'training-indicator inactive';
+                        status.textContent = 'Stopped';
+                    }
+                    
+                    // Update best configuration
+                    document.getElementById('best-step').textContent = data.best_step;
+                    document.getElementById('best-reward-value').textContent = data.best_reward.toFixed(2);
+                    
+                    const paramList = document.getElementById('best-config-params');
+                    if (Object.keys(data.best_config).length > 0) {
+                        paramList.innerHTML = '';
+                        for (const [param, value] of Object.entries(data.best_config)) {
+                            const li = document.createElement('li');
+                            li.textContent = `${param} = ${value}`;
+                            paramList.appendChild(li);
+                        }
+                    }
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+        
+        // Update plots
+        function updatePlot(endpoint, containerId) {
+            fetch(endpoint)
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById(containerId);
+                    if (data.image) {
+                        container.innerHTML = `<img src="data:image/png;base64,${data.image}" alt="Plot">`;
+                    } else if (data.error) {
+                        container.innerHTML = `<div class="loading"><p>${data.error}</p></div>`;
+                    }
+                })
+                .catch(error => {
+                    console.error(`Error fetching ${endpoint}:`, error);
+                });
+        }
+        
+        function updateAllPlots() {
+            updatePlot('/plot/learning_curve', 'learning-curve-container');
+            updatePlot('/plot/performance_stability', 'perf-stab-container');
+            updatePlot('/plot/episode_rewards', 'episode-rewards-container');
+        }
+        
+        // Real-time updates via SSE
+        const eventSource = new EventSource('/stream');
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            // Update quick stats
+            document.getElementById('current-reward').textContent = data.reward.toFixed(2);
+            document.getElementById('best-reward').textContent = data.best_reward.toFixed(2);
+        };
+        
+        // Initial load
+        updateDashboard();
+        updateAllPlots();
+        
+        // Periodic updates
+        setInterval(updateDashboard, 2000);  // Every 2 seconds
+        setInterval(updateAllPlots, 5000);   // Every 5 seconds
+    </script>
+</body>
+</html>

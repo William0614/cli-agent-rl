@@ -116,7 +116,8 @@ def select_from_list(data_list: list, index: Optional[int] = None, filter_key: O
     except Exception as e:
         return {"error": str(e)}
 
-async def optimize_workload(workload_description: str, config_json: Optional[str] = None) -> dict:
+async def optimize_workload(workload_description: str, config_json: Optional[str] = None, 
+                           use_web_dashboard: bool = True) -> dict:
     """
     Optimizes OS kernel parameters for a specific workload using SEAL-inspired RL.
     
@@ -130,6 +131,7 @@ async def optimize_workload(workload_description: str, config_json: Optional[str
                              "CPU-intensive scientific computation")
         config_json: Optional pre-generated JSON configuration. If not provided,
                     the LLM will generate it based on workload_description.
+        use_web_dashboard: If True, use web-based dashboard for headless servers (default: True)
     
     Returns:
         Dictionary with optimization results including best configuration and performance improvement
@@ -171,9 +173,12 @@ async def optimize_workload(workload_description: str, config_json: Optional[str
         # Note: We run this synchronously because it needs to stream output
         results = run_rl_optimization(
             config_path=config_path,
-            dry_run=False,        # Real optimization
-            verbose=False,        # Minimal console output (dashboard shows progress)
-            show_dashboard=True   # Show real-time visualization
+            dry_run=False,                  # Real optimization
+            verbose=False,                  # Minimal console output (dashboard shows progress)
+            show_dashboard=True,            # Show real-time visualization
+            use_web_dashboard=use_web_dashboard,  # Use web dashboard for headless servers
+            web_host='0.0.0.0',            # Accessible from network
+            web_port=5000                   # Default Flask port
         )
         
         # Clean up temporary file

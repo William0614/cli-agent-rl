@@ -12,7 +12,18 @@ Works on openEuler (uses matplotlib + threading for real-time updates)
 """
 
 import matplotlib
-matplotlib.use('TkAgg')  # Use Tk backend for Linux compatibility
+# Try different backends for compatibility
+try:
+    matplotlib.use('TkAgg')  # Try Tk backend first
+except:
+    try:
+        matplotlib.use('Qt5Agg')  # Try Qt5 backend
+    except:
+        try:
+            matplotlib.use('Agg')  # Fallback to non-interactive (saves to file)
+        except:
+            pass  # Use default
+
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
@@ -68,50 +79,57 @@ class RLVisualizationDashboard:
         
     def _setup_figure(self):
         """Set up the matplotlib figure with subplots."""
-        # Create figure with subplots
-        self.fig = plt.figure(figsize=(16, 10))
-        self.fig.suptitle('RL Optimization Training Dashboard', fontsize=16, fontweight='bold')
-        
-        # Create grid layout
-        gs = self.fig.add_gridspec(3, 3, hspace=0.3, wspace=0.3)
-        
-        # 1. Learning Curve (top-left, large)
-        self.axes['learning'] = self.fig.add_subplot(gs[0, :2])
-        self.axes['learning'].set_title('Learning Curve: Reward over Time', fontweight='bold')
-        self.axes['learning'].set_xlabel('Step')
-        self.axes['learning'].set_ylabel('Reward')
-        self.axes['learning'].grid(True, alpha=0.3)
-        
-        # 2. Best Config Display (top-right)
-        self.axes['best_config'] = self.fig.add_subplot(gs[0, 2])
-        self.axes['best_config'].set_title('Best Configuration', fontweight='bold')
-        self.axes['best_config'].axis('off')
-        
-        # 3. Performance vs Stability (middle-left)
-        self.axes['tradeoff'] = self.fig.add_subplot(gs[1, 0])
-        self.axes['tradeoff'].set_title('Performance vs Stability', fontweight='bold')
-        self.axes['tradeoff'].set_xlabel('Performance Score')
-        self.axes['tradeoff'].set_ylabel('Stability Score')
-        self.axes['tradeoff'].grid(True, alpha=0.3)
-        
-        # 4. Episode Rewards (middle-center)
-        self.axes['episodes'] = self.fig.add_subplot(gs[1, 1])
-        self.axes['episodes'].set_title('Episode Rewards', fontweight='bold')
-        self.axes['episodes'].set_xlabel('Episode')
-        self.axes['episodes'].set_ylabel('Avg Reward')
-        self.axes['episodes'].grid(True, alpha=0.3)
-        
-        # 5. Parameter Exploration (middle-right)
-        self.axes['params'] = self.fig.add_subplot(gs[1, 2])
-        self.axes['params'].set_title('Parameter Exploration', fontweight='bold')
-        
-        # 6. Statistics Panel (bottom, spans all columns)
-        self.axes['stats'] = self.fig.add_subplot(gs[2, :])
-        self.axes['stats'].set_title('Training Statistics', fontweight='bold')
-        self.axes['stats'].axis('off')
-        
-        plt.ion()  # Interactive mode
-        self.fig.show()
+        try:
+            # Create figure with subplots
+            self.fig = plt.figure(figsize=(16, 10))
+            self.fig.suptitle('RL Optimization Training Dashboard', fontsize=16, fontweight='bold')
+            
+            # Create grid layout
+            gs = self.fig.add_gridspec(3, 3, hspace=0.3, wspace=0.3)
+            
+            # 1. Learning Curve (top-left, large)
+            self.axes['learning'] = self.fig.add_subplot(gs[0, :2])
+            self.axes['learning'].set_title('Learning Curve: Reward over Time', fontweight='bold')
+            self.axes['learning'].set_xlabel('Step')
+            self.axes['learning'].set_ylabel('Reward')
+            self.axes['learning'].grid(True, alpha=0.3)
+            
+            # 2. Best Config Display (top-right)
+            self.axes['best_config'] = self.fig.add_subplot(gs[0, 2])
+            self.axes['best_config'].set_title('Best Configuration', fontweight='bold')
+            self.axes['best_config'].axis('off')
+            
+            # 3. Performance vs Stability (middle-left)
+            self.axes['tradeoff'] = self.fig.add_subplot(gs[1, 0])
+            self.axes['tradeoff'].set_title('Performance vs Stability', fontweight='bold')
+            self.axes['tradeoff'].set_xlabel('Performance Score')
+            self.axes['tradeoff'].set_ylabel('Stability Score')
+            self.axes['tradeoff'].grid(True, alpha=0.3)
+            
+            # 4. Episode Rewards (middle-center)
+            self.axes['episodes'] = self.fig.add_subplot(gs[1, 1])
+            self.axes['episodes'].set_title('Episode Rewards', fontweight='bold')
+            self.axes['episodes'].set_xlabel('Episode')
+            self.axes['episodes'].set_ylabel('Avg Reward')
+            self.axes['episodes'].grid(True, alpha=0.3)
+            
+            # 5. Parameter Exploration (middle-right)
+            self.axes['params'] = self.fig.add_subplot(gs[1, 2])
+            self.axes['params'].set_title('Parameter Exploration', fontweight='bold')
+            
+            # 6. Statistics Panel (bottom, spans all columns)
+            self.axes['stats'] = self.fig.add_subplot(gs[2, :])
+            self.axes['stats'].set_title('Training Statistics', fontweight='bold')
+            self.axes['stats'].axis('off')
+            
+            plt.ion()  # Interactive mode
+            self.fig.show()
+        except Exception as e:
+            print(f"Warning: Could not initialize interactive display: {e}")
+            print("Dashboard will save plots to file instead")
+            # Still create figure but don't show
+            self.fig = plt.figure(figsize=(16, 10))
+
         
     def add_data_point(self, step: int, reward: float, performance: float, 
                        stability: float, episode: int, params: Dict[str, float]):

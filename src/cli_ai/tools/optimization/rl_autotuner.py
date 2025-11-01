@@ -251,6 +251,10 @@ class OSTuningEnv(gym.Env):
                 self.default_params[param_name] = (min_val + max_val) / 2
                 if self.verbose:
                     print(f"  {param_name}: Could not read, using midpoint {self.default_params[param_name]}")
+        
+        # If we're in dry-run or couldn't read any params, just log and continue
+        if not self.default_params and not self.dry_run:
+            print("Warning: Could not read any default parameters. Rollback may not work correctly.")
     
     def _denormalize_action(self, normalized_action: np.ndarray) -> Dict[str, float]:
         """
@@ -607,13 +611,20 @@ class OSTuningEnv(gym.Env):
     
     def rollback(self):
         """Emergency rollback to default parameters."""
+        if not self.default_params:
+            if self.verbose:
+                print("\nNo default parameters stored - skipping rollback")
+            return
+            
         if self.verbose:
             print("\nPerforming emergency rollback to default parameters...")
         
         success, error = self._apply_parameters(self.default_params)
         
         if not success:
-            print(f"ERROR: Rollback failed: {error}", file=sys.stderr)
+            # Don't fail catastrophically on rollback errors
+            if self.verbose or not self.dry_run:
+                print(f"Warning: Rollback had issues: {error}")
         else:
             if self.verbose:
                 print("✓ Rollback successful")
@@ -626,10 +637,12 @@ class OSTuningEnv(gym.Env):
 class RLProgressCallback(BaseCallback):
     """Callback for real-time progress reporting and visualization updates."""
     
-    def __init__(self, env: OSTuningEnv, dashboard=None, verbose: int = 0):
+    def __init__(self, env: OSTuningEnv, dashboard=None, web_dashboard=None, console_tracker=None, verbose: int = 0):
         super().__init__(verbose)
         self.env = env
         self.dashboard = dashboard
+        self.web_dashboard = web_dashboard
+        self.console_tracker = console_tracker
         self.episode_rewards = []
         self.episode_lengths = []
         self.step_count = 0
@@ -638,24 +651,60 @@ class RLProgressCallback(BaseCallback):
         """Called after each step in the environment."""
         self.step_count += 1
         
-        # Update dashboard if available
-        if self.dashboard is not None:
-            try:
-                # Get info from the last step
-                info = self.locals.get('infos', [{}])[0]
-                
-                if 'performance_score' in info and 'stability_score' in info:
+        # Get info from the last step
+        info = self.locals.get('infos', [{}])[0]
+        
+        if 'performance_score' in info and 'stability_score' in info:
+            reward = self.locals.get('rewards', [0])[0]
+            performance = info['performance_score']
+            stability = info['stability_score']
+            episode = self.env.episode_num
+            params = info.get('params', {})
+            
+            # Update web dashboard if available (priority)
+            if self.web_dashboard is not None:
+                try:
+                    self.web_dashboard.add_data_point(
+                        step=self.step_count,
+                        reward=reward,
+                        performance=performance,
+                        stability=stability,
+                        episode=episode,
+                        params=params
+                    )
+                except Exception as e:
+                    if self.verbose > 0:
+                        print(f"Web dashboard update error: {e}")
+            
+            # Update GUI dashboard if available
+            elif self.dashboard is not None:
+                try:
                     self.dashboard.add_data_point(
                         step=self.step_count,
-                        reward=self.locals.get('rewards', [0])[0],
-                        performance=info['performance_score'],
-                        stability=info['stability_score'],
-                        episode=self.env.episode_num,
-                        params=info.get('params', {})
+                        reward=reward,
+                        performance=performance,
+                        stability=stability,
+                        episode=episode,
+                        params=params
                     )
-            except Exception as e:
-                if self.verbose > 0:
-                    print(f"Dashboard update error: {e}")
+                except Exception as e:
+                    if self.verbose > 0:
+                        print(f"Dashboard update error: {e}")
+            
+            # Update console tracker if available (when both dashboards fail)
+            elif self.console_tracker is not None:
+                try:
+                    self.console_tracker.update(
+                        step=self.step_count,
+                        reward=reward,
+                        performance=performance,
+                        stability=stability,
+                        episode=episode,
+                        params=params
+                    )
+                except Exception as e:
+                    if self.verbose > 0:
+                        print(f"Console tracker error: {e}")
         
         return True
     
@@ -674,7 +723,8 @@ class RLProgressCallback(BaseCallback):
 
 
 def run_rl_optimization(config_path: str, dry_run: bool = False, verbose: bool = False, 
-                       show_dashboard: bool = True) -> Dict[str, Any]:
+                       show_dashboard: bool = True, use_web_dashboard: bool = False,
+                       web_host: str = '0.0.0.0', web_port: int = 5000) -> Dict[str, Any]:
     """
     Main function to run RL-based OS optimization.
     
@@ -683,6 +733,9 @@ def run_rl_optimization(config_path: str, dry_run: bool = False, verbose: bool =
         dry_run: If True, simulate without actually modifying system
         verbose: If True, print detailed progress (default: False)
         show_dashboard: If True, show real-time visualization dashboard (default: True)
+        use_web_dashboard: If True, use web-based dashboard instead of GUI (default: False)
+        web_host: Host address for web dashboard (default: '0.0.0.0')
+        web_port: Port for web dashboard (default: 5000)
         
     Returns:
         Dictionary containing optimization results
@@ -719,13 +772,60 @@ def run_rl_optimization(config_path: str, dry_run: bool = False, verbose: bool =
     print(f"{'='*80}")
     print(f"Total Timesteps: {total_timesteps}")
     print(f"Learning Rate: {learning_rate}")
-    print(f"Visualization: {'Enabled' if show_dashboard else 'Disabled'}")
+    print(f"Visualization: {'Web Dashboard' if use_web_dashboard else ('GUI Dashboard' if show_dashboard else 'Disabled')}")
+    if use_web_dashboard:
+        print(f"Dashboard URL: http://{web_host}:{web_port}")
     print(f"{'='*80}\n")
     
     # Initialize visualization dashboard
     dashboard = None
+    web_dashboard = None
+    console_tracker = None
     dashboard_thread = None
-    if show_dashboard:
+    web_server_thread = None
+    
+    if use_web_dashboard and show_dashboard:
+        # Use web-based dashboard for headless servers
+        try:
+            from .web_dashboard import WebDashboard, run_dashboard_server
+            import threading
+            
+            param_names = [p['param'] for p in config['action_space']]
+            web_dashboard = WebDashboard(
+                workload_name=config['workload_name'],
+                param_names=param_names
+            )
+            
+            # Start Flask server in background thread
+            web_server_thread = threading.Thread(
+                target=run_dashboard_server,
+                kwargs={'host': web_host, 'port': web_port},
+                daemon=True
+            )
+            web_server_thread.start()
+            
+            print("✓ Web-based dashboard server started")
+            print(f"  → Open http://{web_host}:{web_port} in your browser")
+            print("  - Real-time learning curve")
+            print("  - Performance vs Stability")
+            print("  - Episode rewards")
+            print("  - Best configuration tracker\n")
+            
+            time.sleep(2)  # Give server time to start
+            
+        except Exception as e:
+            print(f"Warning: Could not initialize web dashboard: {e}")
+            print("Falling back to console progress tracker...\n")
+            web_dashboard = None
+            
+            try:
+                from .console_progress import ConsoleProgressTracker
+                console_tracker = ConsoleProgressTracker()
+            except:
+                pass
+    
+    elif show_dashboard:
+        # Use GUI dashboard (requires display)
         try:
             from .visualization import create_dashboard
             param_names = [p['param'] for p in config['action_space']]
@@ -744,8 +844,15 @@ def run_rl_optimization(config_path: str, dry_run: bool = False, verbose: bool =
             print("  - Best configuration tracker\n")
         except Exception as e:
             print(f"Warning: Could not initialize dashboard: {e}")
-            print("Continuing without visualization...\n")
+            print("Using console progress tracker instead...\n")
             dashboard = None
+            
+            # Fall back to console tracker
+            try:
+                from .console_progress import ConsoleProgressTracker
+                console_tracker = ConsoleProgressTracker()
+            except:
+                pass
     
     # Create PPO agent
     try:
@@ -766,26 +873,44 @@ def run_rl_optimization(config_path: str, dry_run: bool = False, verbose: bool =
     
     # Train the model
     try:
-        callback = RLProgressCallback(env, dashboard=dashboard, verbose=1 if verbose else 0)
+        callback = RLProgressCallback(
+            env, 
+            dashboard=dashboard,
+            web_dashboard=web_dashboard,
+            console_tracker=console_tracker,
+            verbose=1 if verbose else 0
+        )
         model.learn(total_timesteps=total_timesteps, callback=callback)
     except KeyboardInterrupt:
         print("\n\nTraining interrupted by user. Performing rollback...", file=sys.stderr)
         env.rollback()
+        if web_dashboard:
+            print("Web dashboard server will continue running. Press Ctrl+C again to stop.")
         if dashboard:
             dashboard.stop()
+        if console_tracker:
+            console_tracker.print_summary()
         return {'success': False, 'error': 'Interrupted by user'}
     except Exception as e:
         print(f"\nERROR during training: {e}", file=sys.stderr)
         env.rollback()
         if dashboard:
             dashboard.stop()
+        if console_tracker:
+            console_tracker.print_summary()
         return {'success': False, 'error': str(e)}
     finally:
         # Keep dashboard open for a few seconds to see final state
-        if dashboard:
+        if web_dashboard:
+            print("\nTraining complete! Web dashboard is still accessible.")
+            print(f"View results at: http://{web_host}:{web_port}")
+            print("Dashboard will remain running. Press Ctrl+C to stop.")
+        elif dashboard:
             print("\nTraining complete! Dashboard will remain open for 10 seconds...")
             time.sleep(10)
             dashboard.stop()
+        elif console_tracker:
+            console_tracker.print_summary()
     
     # Get final results
     best_config, best_reward = env.get_best_config()
