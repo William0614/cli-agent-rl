@@ -22,8 +22,14 @@ import matplotlib.pyplot as plt
 import io
 import base64
 from threading import Lock
+from pathlib import Path
 
-app = Flask(__name__)
+# Get the project root directory (4 levels up from this file)
+# web_dashboard.py -> optimization -> tools -> cli_ai -> src -> root
+project_root = Path(__file__).parent.parent.parent.parent.parent
+template_dir = project_root / 'templates'
+
+app = Flask(__name__, template_folder=str(template_dir))
 
 # Global state (thread-safe)
 state_lock = Lock()

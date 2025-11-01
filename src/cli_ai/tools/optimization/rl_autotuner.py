@@ -622,9 +622,10 @@ class OSTuningEnv(gym.Env):
         success, error = self._apply_parameters(self.default_params)
         
         if not success:
-            # Don't fail catastrophically on rollback errors
-            if self.verbose or not self.dry_run:
-                print(f"Warning: Rollback had issues: {error}")
+            # Silently ignore rollback errors in non-verbose mode
+            # (they're usually harmless, like trying to restore unsupported params)
+            if self.verbose:
+                print(f"Note: Some parameters couldn't be restored: {error}")
         else:
             if self.verbose:
                 print("✓ Rollback successful")
