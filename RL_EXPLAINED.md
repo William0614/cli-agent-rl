@@ -9,7 +9,7 @@ Your system uses **Reinforcement Learning (RL)** to automatically tune Linux ker
 ## Table of Contents
 
 1. [What is Reinforcement Learning?](#what-is-reinforcement-learning)
-2. [The SEAL Framework](#the-seal-framework)
+2. [The Framework](#the-framework)
 3. [Your Implementation: Two-Layer AI](#your-implementation-two-layer-ai)
 4. [The RL Training Loop (Code Walkthrough)](#the-rl-training-loop-code-walkthrough)
 5. [The PPO Algorithm Explained](#the-ppo-algorithm-explained)
@@ -96,19 +96,11 @@ for swappiness in [0, 10, 20, ..., 100]:
 
 ---
 
-## The SEAL Framework
-
-### What is SEAL?
-
-**SEAL** = **S**elf-**E**volving **A**daptive **L**earning
-
-It's a research paper from Google/Stanford that showed how to combine:
-- **LLMs** (Large Language Models like GPT) for high-level reasoning
-- **RL** (Reinforcement Learning) for trial-and-error optimization
+## The Framework
 
 ### The Core Idea
 
-Instead of just using RL blindly, SEAL uses an LLM to:
+Instead of just using RL blindly:
 1. **Understand** the problem ("optimize PostgreSQL for heavy writes")
 2. **Generate strategy** ("focus on I/O parameters, memory buffering")
 3. **Create training curriculum** (structured learning plan)
@@ -126,7 +118,7 @@ RL Agent: *randomly tries millions of combinations*
           *might never find good solutions*
 ```
 
-**SEAL-Inspired RL:**
+**LLM + RL:**
 ```
 Problem: "Optimize PostgreSQL for heavy writes"
 LLM: "This is a write-heavy workload. Focus on:
@@ -144,7 +136,7 @@ RL Agent: *starts from intelligent baseline*
 
 ## Your Implementation: Two-Layer AI
 
-Your system implements SEAL as a **two-layer architecture**:
+System implements a **two-layer architecture**:
 
 ### Layer 1: The Strategist (LLM)
 
@@ -1393,15 +1385,4 @@ Into a **self-tuning system** that learns optimal configurations automatically.
 
 ## Final Thoughts
 
-You now understand:
-- ✅ What Reinforcement Learning is (trial-and-error learning)
-- ✅ What SEAL is (LLM + RL collaboration)
-- ✅ How PPO works (stable policy updates)
-- ✅ How the Gym environment works (your custom OS tuning game)
-- ✅ How the reward system works (performance + stability)
-- ✅ Why this approach is better (smarter than grid search, more general than rules)
-- ✅ What happens during training (exploration → exploitation → fine-tuning)
-
 **The key insight:** RL doesn't need to be told the answer. It discovers optimal solutions through experience, guided by rewards. Combined with an LLM to set up the problem, it becomes a powerful automatic optimization system.
-
-Your system is doing cutting-edge AI research (SEAL-inspired learning) applied to a practical problem (kernel parameter optimization). That's pretty cool! 🚀
