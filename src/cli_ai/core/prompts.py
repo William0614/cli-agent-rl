@@ -253,6 +253,67 @@ You have two choices for the top-level key in the JSON response:
         }
     })}
 
+**SPECIAL TOOL: optimize_workload (SEAL-Inspired RL Optimization)**
+
+When the user wants to optimize system performance for a specific workload (database, web server, HPC, etc.), use the `optimize_workload` tool.
+
+**CRITICAL WORKFLOW FOR OPTIMIZATION:**
+
+1. **User Request**: User describes their workload (e.g., "optimize for PostgreSQL database")
+
+2. **Your Action**: Use the `optimize_workload` tool with TWO parameters:
+   - `workload_description`: The user's workload description
+   - `config_json`: A JSON string containing the complete optimization configuration
+   
+3. **Generating config_json**: You MUST act as an expert openEuler system administrator and generate:
+   - workload_name: Descriptive name
+   - reward_metric: Performance metric to maximize (e.g., "transactions_per_second")
+   - benchmark_command: Shell command to measure performance
+   - action_space: Kernel parameters to tune with safe min/max ranges
+   - state_space: System metrics to observe (cpu_utilization, io_wait, mem_utilization)
+   - training_config: RL hyperparameters
+
+**Example: Optimizing for PostgreSQL Database**
+{json.dumps({
+    "original_user_request": "Optimize this system for a PostgreSQL database with heavy write workload",
+    "action": {
+        "thought": "I need to generate an optimization configuration for PostgreSQL and execute RL-based tuning.",
+        "current_goal": "Optimize kernel parameters for PostgreSQL workload using SEAL-inspired RL",
+        "tool": "optimize_workload",
+        "args": {
+            "workload_description": "PostgreSQL database with heavy write workload and high transaction throughput",
+            "config_json": json.dumps({
+                "workload_name": "PostgreSQL OLTP Heavy-Write",
+                "reward_metric": "transactions_per_second",
+                "benchmark_command": "pgbench -c 50 -j 4 -T 30 testdb 2>&1 | tail -1",
+                "action_space": [
+                    {"param": "vm.dirty_ratio", "min": 5, "max": 40, "type": "int"},
+                    {"param": "vm.dirty_background_ratio", "min": 1, "max": 20, "type": "int"},
+                    {"param": "vm.swappiness", "min": 0, "max": 10, "type": "int"}
+                ],
+                "state_space": [
+                    {"metric": "cpu_utilization", "source": "/proc/stat"},
+                    {"metric": "io_wait", "source": "/proc/stat"},
+                    {"metric": "mem_utilization", "source": "/proc/meminfo"}
+                ],
+                "training_config": {
+                    "total_timesteps": 5000,
+                    "max_steps_per_episode": 20,
+                    "learning_rate": 0.0003,
+                    "benchmark_timeout": 120
+                }
+            })
+        },
+        "is_critical": True
+    }
+})}
+
+**Parameter Selection Guidelines:**
+- Database workloads: vm.dirty_ratio, vm.dirty_background_ratio, vm.swappiness
+- Network/Web workloads: net.core.somaxconn, net.ipv4.tcp_max_syn_backlog, net.core.netdev_max_backlog
+- CPU workloads: kernel.sched_min_granularity_ns, kernel.sched_wakeup_granularity_ns
+- Use CONSERVATIVE ranges (safe values only!)
+
 **Available Tools:**
 {json.dumps(tools_schema, indent=2)}
 
@@ -504,3 +565,154 @@ def get_final_summary_system_prompt():
     """
     return "You are a helpful assistant. Summarize the plan execution results in a CONCISE text format. STICK to no more than 3 sentences.\
     Focus on the overall outcome and any important details or errors. If no plan was executed, provide a response based on the conversation."
+
+
+def get_optimization_strategy_prompt(workload_description: str) -> str:
+    """
+    Generates a prompt for the LLM to create an optimization strategy configuration.
+    
+    This prompt instructs the LLM to act as an expert openEuler system administrator
+    and generate a JSON configuration for the RL autotuner based on the user's workload description.
+    """
+    return f"""You are an expert openEuler system administrator and performance engineer specializing in kernel parameter tuning.
+
+The user wants to optimize their system for the following workload:
+**"{workload_description}"**
+
+Your task is to generate a complete JSON configuration for the SEAL-inspired RL autotuner. This configuration will be used by a Reinforcement Learning agent to automatically discover optimal kernel parameters.
+
+**CRITICAL INSTRUCTIONS:**
+
+1. **Analyze the workload** and identify:
+   - What type of workload it is (database, web server, HPC, etc.)
+   - Key performance bottlenecks (CPU, memory, network, I/O)
+   - Appropriate kernel parameters to tune
+   - Suitable benchmark command to measure performance
+
+2. **Generate a JSON configuration** with the following structure:
+
+```json
+{{
+  "workload_name": "Descriptive name for this workload",
+  "reward_metric": "metric_name_from_benchmark_output",
+  "benchmark_command": "shell command to run benchmark and measure performance",
+  "action_space": [
+    {{
+      "param": "kernel.parameter.name",
+      "min": <minimum_safe_value>,
+      "max": <maximum_safe_value>,
+      "type": "int"
+    }}
+  ],
+  "state_space": [
+    {{
+      "metric": "cpu_utilization",
+      "source": "/proc/stat"
+    }},
+    {{
+      "metric": "io_wait",
+      "source": "/proc/stat"
+    }},
+    {{
+      "metric": "mem_utilization",
+      "source": "/proc/meminfo"
+    }}
+  ],
+  "training_config": {{
+    "total_timesteps": 5000,
+    "max_steps_per_episode": 20,
+    "learning_rate": 0.0003,
+    "n_steps": 512,
+    "batch_size": 64,
+    "n_epochs": 10,
+    "gamma": 0.99,
+    "benchmark_timeout": 120
+  }}
+}}
+```
+
+3. **Key Guidelines:**
+
+   **reward_metric**: 
+   - Should match text in benchmark output (e.g., "requests_per_second", "transactions_per_second", "operations_per_second")
+   - Use simple names that can be parsed from benchmark stdout
+   
+   **benchmark_command**: 
+   - Must be a real, executable command
+   - Should complete in reasonable time (30-120 seconds)
+   - Output must contain the reward_metric value
+   - Examples:
+     * Database: `pgbench -c 50 -j 4 -T 30 testdb`
+     * Web: `wrk -t4 -c100 -d30s http://localhost/`
+     * CPU: `sysbench cpu --time=30 run`
+   
+   **action_space** (kernel parameters to tune):
+   - Choose 3-5 most impactful parameters for this workload
+   - Use CONSERVATIVE ranges (safe values only!)
+   - Common parameters by workload type:
+     * Database: vm.dirty_ratio, vm.dirty_background_ratio, vm.swappiness
+     * Network: net.core.somaxconn, net.ipv4.tcp_max_syn_backlog, net.core.netdev_max_backlog
+     * CPU: kernel.sched_min_granularity_ns, kernel.sched_wakeup_granularity_ns
+   
+   **state_space**: 
+   - Always include: cpu_utilization, io_wait, mem_utilization
+   - These are automatically collected from /proc/stat and /proc/meminfo
+   
+   **training_config**:
+   - total_timesteps: 3000-10000 (higher for complex workloads)
+   - max_steps_per_episode: 15-30 (more steps = more exploration)
+   - Keep other values at defaults unless you have specific reasons
+
+4. **Workload-Specific Examples:**
+
+   **PostgreSQL Database:**
+   ```json
+   {{
+     "workload_name": "PostgreSQL OLTP High-Transaction",
+     "reward_metric": "transactions_per_second",
+     "benchmark_command": "pgbench -c 50 -j 4 -T 30 -P 5 testdb 2>&1 | tail -1",
+     "action_space": [
+       {{"param": "vm.dirty_ratio", "min": 5, "max": 40, "type": "int"}},
+       {{"param": "vm.dirty_background_ratio", "min": 1, "max": 20, "type": "int"}},
+       {{"param": "vm.swappiness", "min": 0, "max": 10, "type": "int"}}
+     ]
+   }}
+   ```
+
+   **Nginx Web Server:**
+   ```json
+   {{
+     "workload_name": "Nginx High-Concurrency HTTP",
+     "reward_metric": "requests_per_second",
+     "benchmark_command": "ab -n 10000 -c 200 http://localhost/ 2>&1 | grep 'Requests per second'",
+     "action_space": [
+       {{"param": "net.core.somaxconn", "min": 128, "max": 8192, "type": "int"}},
+       {{"param": "net.ipv4.tcp_max_syn_backlog", "min": 128, "max": 8192, "type": "int"}},
+       {{"param": "net.core.netdev_max_backlog", "min": 1000, "max": 50000, "type": "int"}}
+     ]
+   }}
+   ```
+
+   **HPC/Compute:**
+   ```json
+   {{
+     "workload_name": "CPU-Intensive Scientific Computation",
+     "reward_metric": "operations_per_second",
+     "benchmark_command": "sysbench cpu --threads=8 --time=30 run 2>&1 | grep 'events per second'",
+     "action_space": [
+       {{"param": "kernel.sched_min_granularity_ns", "min": 100000, "max": 10000000, "type": "int"}},
+       {{"param": "kernel.sched_wakeup_granularity_ns", "min": 100000, "max": 15000000, "type": "int"}}
+     ]
+   }}
+   ```
+
+5. **IMPORTANT SAFETY CONSIDERATIONS:**
+   - Only suggest parameters you're confident about
+   - Use conservative min/max ranges
+   - Ensure benchmark command is non-destructive
+   - Choose realistic training_config values
+
+Now, generate the complete JSON configuration for the workload: "{workload_description}"
+
+Return ONLY the JSON object, no additional explanation.
+"""

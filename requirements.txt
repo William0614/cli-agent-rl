@@ -15,3 +15,8 @@ Pillow
 scipy
 torchvision
 git+https://github.com/huggingface/transformers
+
+# SEAL-inspired RL Optimization dependencies
+gymnasium
+stable-baselines3
+py-cpuinfo

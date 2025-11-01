@@ -1,0 +1,49 @@
+{
+  "workload_name": "High-Throughput Web Server",
+  "reward_metric": "requests_per_second",
+  "benchmark_command": "ab -n 10000 -c 100 http://localhost:80/ 2>&1 | grep 'Requests per second'",
+  "action_space": [
+    {
+      "param": "net.core.somaxconn",
+      "min": 128,
+      "max": 4096,
+      "type": "int"
+    },
+    {
+      "param": "net.core.netdev_max_backlog",
+      "min": 1000,
+      "max": 10000,
+      "type": "int"
+    },
+    {
+      "param": "net.ipv4.tcp_max_syn_backlog",
+      "min": 128,
+      "max": 4096,
+      "type": "int"
+    }
+  ],
+  "state_space": [
+    {
+      "metric": "cpu_utilization",
+      "source": "/proc/stat"
+    },
+    {
+      "metric": "io_wait",
+      "source": "/proc/stat"
+    },
+    {
+      "metric": "mem_utilization",
+      "source": "/proc/meminfo"
+    }
+  ],
+  "training_config": {
+    "total_timesteps": 5000,
+    "max_steps_per_episode": 20,
+    "learning_rate": 0.0003,
+    "n_steps": 512,
+    "batch_size": 64,
+    "n_epochs": 10,
+    "gamma": 0.99,
+    "benchmark_timeout": 60
+  }
+}
