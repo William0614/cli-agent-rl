@@ -624,16 +624,39 @@ class OSTuningEnv(gym.Env):
 
 
 class RLProgressCallback(BaseCallback):
-    """Callback for real-time progress reporting during RL training."""
+    """Callback for real-time progress reporting and visualization updates."""
     
-    def __init__(self, env: OSTuningEnv, verbose: int = 1):
+    def __init__(self, env: OSTuningEnv, dashboard=None, verbose: int = 0):
         super().__init__(verbose)
         self.env = env
+        self.dashboard = dashboard
         self.episode_rewards = []
         self.episode_lengths = []
+        self.step_count = 0
     
     def _on_step(self) -> bool:
         """Called after each step in the environment."""
+        self.step_count += 1
+        
+        # Update dashboard if available
+        if self.dashboard is not None:
+            try:
+                # Get info from the last step
+                info = self.locals.get('infos', [{}])[0]
+                
+                if 'performance_score' in info and 'stability_score' in info:
+                    self.dashboard.add_data_point(
+                        step=self.step_count,
+                        reward=self.locals.get('rewards', [0])[0],
+                        performance=info['performance_score'],
+                        stability=info['stability_score'],
+                        episode=self.env.episode_num,
+                        params=info.get('params', {})
+                    )
+            except Exception as e:
+                if self.verbose > 0:
+                    print(f"Dashboard update error: {e}")
+        
         return True
     
     def _on_rollout_end(self) -> None:
@@ -645,20 +668,21 @@ class RLProgressCallback(BaseCallback):
                 print(f"Rollout Summary")
                 print(f"{'='*80}")
                 print(f"Best Reward So Far: {best_reward:.2f}")
-                print(f"Best Configuration:")
-                for param, value in best_config.items():
-                    print(f"  {param}: {value}")
+                print(f"Steps: {self.step_count}")
+                print(f"Episodes: {self.env.episode_num}")
                 print(f"{'='*80}\n")
 
 
-def run_rl_optimization(config_path: str, dry_run: bool = False, verbose: bool = True) -> Dict[str, Any]:
+def run_rl_optimization(config_path: str, dry_run: bool = False, verbose: bool = False, 
+                       show_dashboard: bool = True) -> Dict[str, Any]:
     """
     Main function to run RL-based OS optimization.
     
     Args:
         config_path: Path to JSON configuration file
         dry_run: If True, simulate without actually modifying system
-        verbose: If True, print detailed progress
+        verbose: If True, print detailed progress (default: False)
+        show_dashboard: If True, show real-time visualization dashboard (default: True)
         
     Returns:
         Dictionary containing optimization results
@@ -695,7 +719,33 @@ def run_rl_optimization(config_path: str, dry_run: bool = False, verbose: bool =
     print(f"{'='*80}")
     print(f"Total Timesteps: {total_timesteps}")
     print(f"Learning Rate: {learning_rate}")
+    print(f"Visualization: {'Enabled' if show_dashboard else 'Disabled'}")
     print(f"{'='*80}\n")
+    
+    # Initialize visualization dashboard
+    dashboard = None
+    dashboard_thread = None
+    if show_dashboard:
+        try:
+            from .visualization import create_dashboard
+            param_names = [p['param'] for p in config['action_space']]
+            dashboard = create_dashboard(param_names)
+            dashboard.start()
+            
+            # Start update loop in separate thread
+            import threading
+            dashboard_thread = threading.Thread(target=dashboard.run_update_loop, daemon=True)
+            dashboard_thread.start()
+            
+            print("✓ Real-time visualization dashboard started")
+            print("  - Learning curve")
+            print("  - Performance vs Stability")
+            print("  - Parameter exploration")
+            print("  - Best configuration tracker\n")
+        except Exception as e:
+            print(f"Warning: Could not initialize dashboard: {e}")
+            print("Continuing without visualization...\n")
+            dashboard = None
     
     # Create PPO agent
     try:
@@ -716,16 +766,26 @@ def run_rl_optimization(config_path: str, dry_run: bool = False, verbose: bool =
     
     # Train the model
     try:
-        callback = RLProgressCallback(env, verbose=1 if verbose else 0)
+        callback = RLProgressCallback(env, dashboard=dashboard, verbose=1 if verbose else 0)
         model.learn(total_timesteps=total_timesteps, callback=callback)
     except KeyboardInterrupt:
         print("\n\nTraining interrupted by user. Performing rollback...", file=sys.stderr)
         env.rollback()
+        if dashboard:
+            dashboard.stop()
         return {'success': False, 'error': 'Interrupted by user'}
     except Exception as e:
         print(f"\nERROR during training: {e}", file=sys.stderr)
         env.rollback()
+        if dashboard:
+            dashboard.stop()
         return {'success': False, 'error': str(e)}
+    finally:
+        # Keep dashboard open for a few seconds to see final state
+        if dashboard:
+            print("\nTraining complete! Dashboard will remain open for 10 seconds...")
+            time.sleep(10)
+            dashboard.stop()
     
     # Get final results
     best_config, best_reward = env.get_best_config()

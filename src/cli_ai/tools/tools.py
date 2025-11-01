@@ -171,8 +171,9 @@ async def optimize_workload(workload_description: str, config_json: Optional[str
         # Note: We run this synchronously because it needs to stream output
         results = run_rl_optimization(
             config_path=config_path,
-            dry_run=False,  # Real optimization
-            verbose=True     # Detailed output for user
+            dry_run=False,        # Real optimization
+            verbose=False,        # Minimal console output (dashboard shows progress)
+            show_dashboard=True   # Show real-time visualization
         )
         
         # Clean up temporary file
