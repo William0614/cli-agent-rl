@@ -1,12 +1,13 @@
 python-dotenv
 colorama
+# Use transformers from PyPI, comment out git line
 transformers
 sentence-transformers
 sounddevice
 numpy
 faiss-cpu
-distro
-terminal-bench
+distro==1.21.6       # Last version compatible with Python <3.11
+# terminal-bench does not have a Python 3.11 compatible release on PyPI, you may need to remove it or install from source
 aiofiles
 torch
 torchaudio
@@ -14,8 +15,6 @@ soundfile
 Pillow
 scipy
 torchvision
-# git+https://github.com/huggingface/transformers
-transformers
 
 # SEAL-inspired RL Optimization dependencies
 gymnasium
