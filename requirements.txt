@@ -14,7 +14,8 @@ soundfile
 Pillow
 scipy
 torchvision
-git+https://github.com/huggingface/transformers
+# git+https://github.com/huggingface/transformers
+transformers
 
 # SEAL-inspired RL Optimization dependencies
 gymnasium
