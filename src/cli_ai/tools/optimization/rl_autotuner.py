@@ -808,8 +808,6 @@ def run_rl_optimization(config_path: str, dry_run: bool = False, verbose: bool =
             )
             web_server_thread.start()
             
-            print("✓ Web-based dashboard server started")
-            print(f"  → Open http://{web_host}:{web_port} in your browser")
             print("  - Real-time learning curve")
             print("  - Performance vs Stability")
             print("  - Episode rewards")
