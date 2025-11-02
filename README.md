@@ -43,50 +43,6 @@ https://github.com/user-attachments/assets/65cbcf74-d64e-4cb3-8485-dfcdce28988c
 ![CLI AI Agent System Architecture](https://github.com/William0614/multimodal-cli-agent/blob/main/assets/cli-ai-agent.png?raw=true)
 
 
-## 📁 Project Structure
-
-```
-```
-multimodal-cli-agent/
-├── src/cli_ai/              # Main package
-│   ├── core/              
-│   │   ├── ai_engine.py     # ReAct engine with reflexion
-│   │   └── prompts.py
-│   ├── agents/            
-│   │   ├── memory_system.py # Vector memory with FAISS
-│   │   └── user_info.py     # User preference learning
-│   ├── tools/              
-│   │   ├── executor.py      # Enhanced tool execution engine
-│   │   ├── tools.py
-│   │   ├── optimization/    # RL Autotuner
-│   │   │   ├── rl_autotuner.py       # PPO-based optimization
-│   │   │   ├── web_dashboard.py      # Real-time web visualization
-│   │   │   └── safety_validator.py   # Parameter validation
-│   │   ├── vision/          
-│   │   │   ├── similarity.py    # DINOv3 image clustering
-│   │   │   └── local_models.py  # Multi-model vision support
-│   │   ├── audio/           # Speech processing
-│   │   └── system/          # OS and file operations
-│   └── utils/               
-│       ├── directory_manager.py  # Shared directory state
-│       ├── task_continuity.py    # Context-aware task detection
-│       ├── task_progress.py      # Progress analysis & loop prevention
-│       ├── database.py           # Enhanced vector storage
-│       └── os_helpers.py         # Cross-platform compatibility
-├── benchmarks/              # Workload benchmarks
-│   ├── fast_memory_bench.py      # Memory + I/O benchmark
-│   └── fast_network_bench.py     # Network performance benchmark
-├── configs/                 # RL configurations
-│   └── hackathon_demo_config.json
-├── templates/               # Web dashboard templates
-│   └── rl_dashboard.html
-├── tests/                   
-├── main.py                  # Application entry point
-├── RL_README.md             # RL documentation
-└── Configuration files...
-```
-```
-
 ## 🛠️ Installation
 
 ### Prerequisites

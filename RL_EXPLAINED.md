@@ -1,27 +1,3 @@
-# Understanding Reinforcement Learning in Your System
-
-## Executive Summary
-
-Your system uses **Reinforcement Learning (RL)** to automatically tune Linux kernel parameters for optimal performance. Think of it like training a dog: the dog (RL agent) tries different actions, gets rewards for good behavior, and learns which actions work best. In your case, the "dog" is trying different kernel settings, and the "reward" is better system performance.
-
----
-
-## Table of Contents
-
-1. [What is Reinforcement Learning?](#what-is-reinforcement-learning)
-2. [The Framework](#the-framework)
-3. [Your Implementation: Two-Layer AI](#your-implementation-two-layer-ai)
-4. [The RL Training Loop (Code Walkthrough)](#the-rl-training-loop-code-walkthrough)
-5. [The PPO Algorithm Explained](#the-ppo-algorithm-explained)
-6. [The Gym Environment](#the-gym-environment)
-7. [How Parameters Are Tuned](#how-parameters-are-tuned)
-8. [The Reward System](#the-reward-system)
-9. [Why This Works (And Why It's Better)](#why-this-works-and-why-its-better)
-10. [Concrete Example Walkthrough](#concrete-example-walkthrough)
-
----
-
-## What is Reinforcement Learning?
 
 ### The Basic Idea
 
@@ -134,7 +110,7 @@ RL Agent: *starts from intelligent baseline*
 
 ---
 
-## Your Implementation: Two-Layer AI
+## Two-Layer AI
 
 System implements a **two-layer architecture**:
 
@@ -233,9 +209,7 @@ results = run_rl_optimization(config_path='llm_generated_config.json')
 
 ---
 
-## The RL Training Loop (Code Walkthrough)
-
-Let's walk through the actual code to see how RL training works:
+## The RL Training Loop
 
 ### Step 1: Initialize Environment
 
@@ -283,7 +257,6 @@ model = PPO(
     n_epochs=10  # Training epochs per update
 )
 
-# Start training!
 model.learn(total_timesteps=10000, callback=callback)
 ```
 
@@ -736,7 +709,7 @@ def _get_observation(self):
 
 This tells the agent: "You're at 60% CPU, 75% memory, with these kernel settings."
 
-### Action Space (What the Agent Can Do)
+### Action Space
 
 **Code location:** `rl_autotuner.py`, line ~390
 
@@ -924,30 +897,6 @@ stability_score = 1.0 - (std_dev / mean)
 # 1.0 - (7.9 / 1450) = 0.995 (99.5% stable)
 ```
 
-### Why Both Matter
-
-**High performance, low stability:**
-```
-Run 1: 2000 TPS ✓
-Run 2: 50 TPS ✗ (crash recovery)
-Run 3: 1900 TPS ✓
-Run 4: 100 TPS ✗ (crash recovery)
-
-Average: 1012 TPS
-Problem: Unreliable, crashes often
-```
-
-**Good performance, high stability:**
-```
-Run 1: 1450 TPS ✓
-Run 2: 1460 TPS ✓
-Run 3: 1440 TPS ✓
-Run 4: 1455 TPS ✓
-
-Average: 1451 TPS
-Result: Reliable, consistent
-```
-
 ### Reward Calculation Code
 
 **Code location:** `rl_autotuner.py`, line ~550
@@ -1051,28 +1000,6 @@ if workload == "database":
 # Finds YOUR optimal configuration
 # Not just "good" but "best for you"
 ```
-
-### The Learning Curve
-
-```
-Reward over time:
-
-100 │                                    ___🎯
-    │                              ___---
-    │                        ___---
- 50 │                  ___---
-    │            ___---
-    │      ___---
-  0 └──────────────────────────────────────────
-    0    50   100   150   200   250   300  Steps
-
-Phase 1 (0-50):     Random exploration
-Phase 2 (50-150):   Find promising regions  
-Phase 3 (150-250):  Exploit best settings
-Phase 4 (250+):     Fine-tune optimal
-```
-
----
 
 ## Concrete Example Walkthrough
 
@@ -1316,26 +1243,6 @@ After training:
 
 ---
 
-## Summary
-
-### The Big Picture
-
-1. **You describe your problem** in plain English
-2. **LLM (Strategist)** translates it into RL configuration
-3. **RL Agent (Tactician)** tries different settings
-4. **System measures** performance and stability
-5. **Agent learns** which settings work best
-6. **You get** optimal configuration automatically
-
-### Why It's Powerful
-
-✅ **Automatic:** No manual tuning needed  
-✅ **Intelligent:** LLM guides the search  
-✅ **Adaptive:** Learns YOUR specific workload  
-✅ **Safe:** Built-in safety mechanisms  
-✅ **Fast:** 100x faster than grid search  
-✅ **Proven:** Uses state-of-the-art RL (PPO)
-
 ### The Math Behind It
 
 ```
@@ -1382,7 +1289,3 @@ This system combines:
 Into a **self-tuning system** that learns optimal configurations automatically.
 
 ---
-
-## Final Thoughts
-
-**The key insight:** RL doesn't need to be told the answer. It discovers optimal solutions through experience, guided by rewards. Combined with an LLM to set up the problem, it becomes a powerful automatic optimization system.
