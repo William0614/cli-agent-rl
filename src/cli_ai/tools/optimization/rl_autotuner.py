@@ -368,7 +368,8 @@ class OSTuningEnv(gym.Env):
         """
         print(f"\n=== RUNNING BENCHMARK ===")
         print(f"Benchmark command: {self.benchmark_command}")
-        print(f"Timeout: {self.benchmark_timeout}s")
+        timeout = self.training_config.get('benchmark_timeout', 120)
+        print(f"Timeout: {timeout}s")
         
         if self.verbose:
             print(f"  Running benchmark: {self.benchmark_command}")
