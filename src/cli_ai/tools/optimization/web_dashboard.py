@@ -13,6 +13,7 @@ from flask import Flask, render_template, Response, jsonify
 import json
 import time
 import os
+import logging
 from datetime import datetime
 from collections import deque
 import numpy as np
@@ -23,6 +24,10 @@ import io
 import base64
 from threading import Lock
 from pathlib import Path
+
+# Suppress Flask request logs
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 # Get the project root directory (4 levels up from this file)
 # web_dashboard.py -> optimization -> tools -> cli_ai -> src -> root
@@ -44,6 +49,7 @@ training_state = {
     'best_config': {},
     'best_step': 0,
     'is_training': False,
+    'training_complete': False,  # New flag to stop updates
     'start_time': None,
     'workload_name': '',
     'param_names': []
@@ -82,14 +88,16 @@ class WebDashboard:
                 training_state['best_step'] = step
     
     def stop(self):
-        """Mark training as stopped."""
+        """Mark training as stopped and complete."""
         with state_lock:
             training_state['is_training'] = False
+            training_state['training_complete'] = True
     
     def start(self):
         """Mark training as started."""
         with state_lock:
             training_state['is_training'] = True
+            training_state['training_complete'] = False
 
 
 # Flask routes
@@ -109,7 +117,8 @@ def get_data():
             'rewards': [float(x) for x in training_state['rewards']],
             'episodes': [int(x) for x in training_state['episodes']],
             'best_reward': float(training_state['best_reward']) if training_state['best_reward'] is not None else 0.0,
-            'is_training': bool(training_state['is_training'])
+            'is_training': bool(training_state['is_training']),
+            'training_complete': bool(training_state['training_complete'])
         }
         
         # Calculate statistics
@@ -141,12 +150,18 @@ def stream():
     def event_stream():
         while True:
             with state_lock:
+                # Stop streaming if training is complete
+                if training_state['training_complete']:
+                    yield f"data: {json.dumps({'complete': True})}\n\n"
+                    break
+                
                 if len(training_state['rewards']) > 0:
                     data = {
                         'step': int(training_state['steps'][-1]),
                         'reward': float(training_state['rewards'][-1]),
                         'best_reward': float(training_state['best_reward']),
-                        'is_training': training_state['is_training']
+                        'is_training': training_state['is_training'],
+                        'complete': False
                     }
                     yield f"data: {json.dumps(data)}\n\n"
             time.sleep(1)  # Update every second

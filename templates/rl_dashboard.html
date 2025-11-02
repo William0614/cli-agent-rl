@@ -259,11 +259,23 @@
     </div>
     
     <script>
+        let updateIntervals = {
+            dashboard: null,
+            plots: null
+        };
+        
         // Update dashboard data
         function updateDashboard() {
             fetch('/data')
                 .then(response => response.json())
                 .then(data => {
+                    // Check if training is complete
+                    if (data.training_complete) {
+                        stopAutoRefresh();
+                        document.getElementById('training-status').textContent = 'Complete ✓';
+                        document.querySelector('.refresh-info').textContent = 'Training complete - auto-refresh stopped';
+                    }
+                    
                     // Update status bar
                     document.getElementById('workload-name').textContent = data.workload_name || 'RL Optimization';
                     document.getElementById('total-steps').textContent = data.total_steps.toLocaleString();
@@ -278,7 +290,7 @@
                     if (data.is_training) {
                         indicator.className = 'training-indicator active';
                         status.textContent = 'Training';
-                    } else {
+                    } else if (!data.training_complete) {
                         indicator.className = 'training-indicator inactive';
                         status.textContent = 'Stopped';
                     }
@@ -323,10 +335,29 @@
             updatePlot('/plot/episode_rewards', 'episode-rewards-container');
         }
         
+        function stopAutoRefresh() {
+            if (updateIntervals.dashboard) {
+                clearInterval(updateIntervals.dashboard);
+                updateIntervals.dashboard = null;
+            }
+            if (updateIntervals.plots) {
+                clearInterval(updateIntervals.plots);
+                updateIntervals.plots = null;
+            }
+        }
+        
         // Real-time updates via SSE
         const eventSource = new EventSource('/stream');
         eventSource.onmessage = function(event) {
             const data = JSON.parse(event.data);
+            
+            // Check if training is complete
+            if (data.complete) {
+                eventSource.close();
+                stopAutoRefresh();
+                return;
+            }
+            
             // Update quick stats
             document.getElementById('current-reward').textContent = data.reward.toFixed(2);
             document.getElementById('best-reward').textContent = data.best_reward.toFixed(2);
@@ -336,9 +367,9 @@
         updateDashboard();
         updateAllPlots();
         
-        // Periodic updates
-        setInterval(updateDashboard, 2000);  // Every 2 seconds
-        setInterval(updateAllPlots, 5000);   // Every 5 seconds
+        // Periodic updates (store interval IDs so we can clear them)
+        updateIntervals.dashboard = setInterval(updateDashboard, 2000);  // Every 2 seconds
+        updateIntervals.plots = setInterval(updateAllPlots, 5000);   // Every 5 seconds
     </script>
 </body>
 </html>
