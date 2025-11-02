@@ -283,16 +283,6 @@ def plot_episode_rewards():
 
 def run_dashboard_server(host='0.0.0.0', port=5000):
     """Run the dashboard web server."""
-    print("\n" + "="*80)
-    print("🌐 WEB DASHBOARD STARTED")
-    print("="*80)
-    print(f"Local URL:    http://localhost:{port}")
-    print(f"Network URL:  http://<your-vm-ip>:{port}")
-    print("")
-    print("Open this URL in your browser to view real-time training progress!")
-    print("The dashboard will update automatically as training progresses.")
-    print("="*80 + "\n")
-    
     app.run(host=host, port=port, threaded=True, debug=False)
 
 

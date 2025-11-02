@@ -240,23 +240,17 @@ class OSTuningEnv(gym.Env):
             param_name = param_config['param']
             current_value = SystemMetricsCollector.read_sysctl_param(param_name)
             
-            min_val = param_config['min']
-            max_val = param_config['max']
-            
             if current_value is not None:
-                # Clamp to config range (system default might be outside our tuning range)
-                clamped_value = max(min_val, min(max_val, current_value))
-                self.default_params[param_name] = clamped_value
+                # Store the ACTUAL system value, don't clamp it
+                # We need to restore the real original value, not a clamped one
+                self.default_params[param_name] = current_value
                 if self.verbose:
-                    if clamped_value != current_value:
-                        print(f"  {param_name}: {current_value} (clamped to {clamped_value} for safety)")
-                    else:
-                        print(f"  {param_name}: {current_value}")
+                    print(f"  {param_name}: {current_value}")
             else:
-                # Use midpoint of range as default if can't read
-                self.default_params[param_name] = (min_val + max_val) / 2
+                # If we can't read, don't store a default
+                # Rollback will skip this parameter
                 if self.verbose:
-                    print(f"  {param_name}: Could not read, using midpoint {self.default_params[param_name]}")
+                    print(f"  {param_name}: Could not read, will skip rollback")
         
         # If we're in dry-run or couldn't read any params, just log and continue
         if not self.default_params and not self.dry_run:
@@ -495,10 +489,8 @@ class OSTuningEnv(gym.Env):
             print(f"Episode {self.episode_num} - Reset")
             print(f"{'='*80}")
         
-        # Restore default parameters
-        success, error = self._apply_parameters(self.default_params)
-        if not success:
-            print(f"Warning: Failed to restore defaults: {error}", file=sys.stderr)
+        # Restore default parameters (silently - use rollback instead of _apply_parameters)
+        self.rollback()
         
         # Get baseline reward on first reset
         if self.baseline_reward is None and not self.dry_run:
@@ -622,26 +614,24 @@ class OSTuningEnv(gym.Env):
         return observation, reward, terminated, truncated, info
     
     def rollback(self):
-        """Emergency rollback to default parameters."""
+        """Emergency rollback to default parameters (silent, best-effort)."""
         if not self.default_params:
             return  # Nothing to restore
             
         # Try to restore each parameter individually
-        # Don't fail if one parameter can't be restored
+        # Completely silent - don't show any warnings
         for param_name, value in self.default_params.items():
             try:
                 if not self.dry_run:
-                    result = subprocess.run(
+                    subprocess.run(
                         ['sudo', 'sysctl', '-w', f'{param_name}={int(value)}'],
                         capture_output=True,
                         text=True,
-                        timeout=5
+                        timeout=5,
+                        check=False  # Don't raise exception on non-zero exit
                     )
-                    # Only print if verbose and failed
-                    if result.returncode != 0 and self.verbose:
-                        print(f"Note: Could not restore {param_name} (not critical)")
             except Exception:
-                pass  # Silently ignore - rollback is best-effort
+                pass  # Silently ignore all errors - rollback is best-effort
     
     def get_best_config(self) -> Tuple[Dict[str, float], float]:
         """Get the best configuration found so far."""
