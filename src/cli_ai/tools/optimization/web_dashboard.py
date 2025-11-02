@@ -281,46 +281,9 @@ def plot_episode_rewards():
     return jsonify({'image': img_base64})
 
 
-def run_dashboard_server(host='0.0.0.0', port=5000, max_port_attempts=10):
-    """
-    Run the dashboard web server, automatically trying consecutive ports if busy.
-    
-    Args:
-        host: Host address to bind to
-        port: Starting port number (default 5000)
-        max_port_attempts: Maximum number of ports to try (default 10)
-    
-    Returns:
-        The actual port number used, or None if all attempts failed
-    """
-    import socket
-    
-    for attempt in range(max_port_attempts):
-        try_port = port + attempt
-        
-        # Check if port is available
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            sock.bind((host, try_port))
-            sock.close()
-            
-            # Port is available, start server
-            if attempt > 0:
-                print(f"✓ Web dashboard started on http://{host}:{try_port} (port {port} was in use)")
-            else:
-                print(f"✓ Web dashboard started on http://{host}:{try_port}")
-            
-            app.run(host=host, port=try_port, threaded=True, debug=False)
-            return try_port
-            
-        except socket.error:
-            # Port is in use, try next one
-            sock.close()
-            if attempt < max_port_attempts - 1:
-                pass  # Silently try next port
-            else:
-                print(f"✗ Error: Could not find available port in range {port}-{port + max_port_attempts - 1}")
-                return None
+def run_dashboard_server(host='0.0.0.0', port=5000):
+    """Run the dashboard web server."""
+    app.run(host=host, port=port, threaded=True, debug=False)
 
 
 # For standalone testing
