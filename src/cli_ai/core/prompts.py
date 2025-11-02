@@ -253,7 +253,7 @@ You have two choices for the top-level key in the JSON response:
         }
     })}
 
-**SPECIAL TOOL: optimize_workload (SEAL-Inspired RL Optimization)**
+**SPECIAL TOOL: optimize_workload (RL Optimization)**
 
 When the user wants to optimize system performance for a specific workload (database, web server, HPC, etc.), use the `optimize_workload` tool.
 
@@ -278,7 +278,7 @@ When the user wants to optimize system performance for a specific workload (data
     "original_user_request": "Optimize this system for a PostgreSQL database with heavy write workload",
     "action": {
         "thought": "I need to generate an optimization configuration for PostgreSQL and execute RL-based tuning.",
-        "current_goal": "Optimize kernel parameters for PostgreSQL workload using SEAL-inspired RL",
+        "current_goal": "Optimize kernel parameters for PostgreSQL workload using RL",
         "tool": "optimize_workload",
         "args": {
             "workload_description": "PostgreSQL database with heavy write workload and high transaction throughput",
@@ -579,7 +579,7 @@ def get_optimization_strategy_prompt(workload_description: str) -> str:
 The user wants to optimize their system for the following workload:
 **"{workload_description}"**
 
-Your task is to generate a complete JSON configuration for the SEAL-inspired RL autotuner. This configuration will be used by a Reinforcement Learning agent to automatically discover optimal kernel parameters.
+Your task is to generate a complete JSON configuration for the RL autotuner. This configuration will be used by a Reinforcement Learning agent to automatically discover optimal kernel parameters.
 
 **CRITICAL INSTRUCTIONS:**
 

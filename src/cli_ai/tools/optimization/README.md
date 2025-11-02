@@ -1,8 +1,8 @@
-# SEAL-Inspired RL Autotuner
+# RL Autotuner
 
 ## Overview
 
-The RL Autotuner is the "Tactician" layer of the SEAL-inspired Agentic Tuner system. It uses Reinforcement Learning (PPO algorithm) to automatically discover optimal kernel parameter configurations for specific workloads on openEuler OS.
+The RL Autotuner is the "Tactician" layer of the Agentic Tuner system. It uses Reinforcement Learning (PPO algorithm) to automatically discover optimal kernel parameter configurations for specific workloads on openEuler OS.
 
 ## Architecture
 
@@ -235,13 +235,3 @@ sudo visudo
 - Lower `max_steps_per_episode`
 - Increase stability weight in code (currently 50/50)
 - Use dry-run mode for testing
-
-## Future Enhancements
-
-- [ ] Support for discrete action spaces
-- [ ] Multi-node distributed optimization
-- [ ] Transfer learning between similar workloads
-- [ ] Automated benchmark selection
-- [ ] Integration with monitoring systems (Prometheus, Grafana)
-- [ ] Catastrophic forgetting mitigation (SEAL-style)
-- [ ] Meta-learning for faster adaptation

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Integration Test for SEAL-Inspired Agentic Tuner
+Integration Test for Agentic Tuner
 
 This script tests the complete Strategist + Tactician integration
 by simulating an optimization request through the CLI agent.
@@ -168,7 +168,7 @@ def test_tool_schema():
 def main():
     """Run all tests"""
     print("\n" + "="*80)
-    print("SEAL-INSPIRED AGENTIC TUNER - INTEGRATION TESTS")
+    print("AGENTIC TUNER - INTEGRATION TESTS")
     print("="*80)
     
     results = {}

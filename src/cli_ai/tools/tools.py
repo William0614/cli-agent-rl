@@ -119,7 +119,7 @@ def select_from_list(data_list: list, index: Optional[int] = None, filter_key: O
 async def optimize_workload(workload_description: str, config_json: Optional[str] = None, 
                            use_web_dashboard: bool = True) -> dict:
     """
-    Optimizes OS kernel parameters for a specific workload using SEAL-inspired RL.
+    Optimizes OS kernel parameters for a specific workload using RL.
     
     This tool uses the LLM Strategist to generate an optimization configuration,
     then executes the RL Autotuner (Tactician) to find optimal kernel parameters.
@@ -163,7 +163,7 @@ async def optimize_workload(workload_description: str, config_json: Optional[str
             config_path = f.name
         
         print(f"\n{'='*80}")
-        print(f"Starting SEAL-Inspired RL Optimization")
+        print(f"Starting RL Optimization")
         print(f"{'='*80}")
         print(f"Workload: {config['workload_name']}")
         print(f"Configuration saved to: {config_path}")
@@ -366,7 +366,7 @@ tools_schema = [
         "type": "function",
         "function": {
             "name": "optimize_workload",
-            "description": "Optimizes OS kernel parameters for a specific workload using SEAL-inspired Reinforcement Learning. This tool uses an LLM Strategist to generate an optimization configuration, then executes an RL agent (Tactician) to find optimal kernel parameters through trial-and-error. The optimization considers both performance and system stability (50/50 split). Use this when the user wants to tune system performance for specific workloads like databases, web servers, HPC, etc.",
+            "description": "Optimizes OS kernel parameters for a specific workload using Reinforcement Learning. This tool uses an LLM Strategist to generate an optimization configuration, then executes an RL agent (Tactician) to find optimal kernel parameters through trial-and-error. The optimization considers both performance and system stability (50/50 split). Use this when the user wants to tune system performance for specific workloads like databases, web servers, HPC, etc.",
             "parameters": {
                 "type": "object",
                 "properties": {

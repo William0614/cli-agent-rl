@@ -37,6 +37,6 @@
     "gamma": 0.95,
     "benchmark_timeout": 15,
     "max_steps_per_episode": 10,
-    "verbose": false
+    "verbose": true
   }
 }

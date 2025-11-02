@@ -1,5 +1,5 @@
 """
-Optimization tools for SEAL-inspired RL-based system tuning.
+Optimization tools for RL-based system tuning.
 """
 
 from .rl_autotuner import run_rl_optimization

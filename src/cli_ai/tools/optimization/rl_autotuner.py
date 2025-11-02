@@ -1,5 +1,5 @@
 """
-SEAL-Inspired RL Autotuner for openEuler OS Performance Optimization
+RL Autotuner for openEuler OS Performance Optimization
 
 This module implements the "Tactician" layer - a reinforcement learning agent that
 executes trial-and-error optimization of kernel parameters based on strategies
@@ -963,7 +963,7 @@ def run_rl_optimization(config_path: str, dry_run: bool = False, verbose: bool =
 def main():
     """Main entry point for standalone script execution."""
     parser = argparse.ArgumentParser(
-        description='SEAL-Inspired RL Autotuner for OS Performance Optimization'
+        description='RL Autotuner for OS Performance Optimization'
     )
     parser.add_argument(
         '--config',
