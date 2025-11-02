@@ -216,10 +216,6 @@ class OSTuningEnv(gym.Env):
         self.best_config = None
         self.baseline_reward = None
         
-        # Reward smoothing for more stable learning curve
-        self.reward_history = []
-        self.reward_smooth_window = 3  # Average over last 3 rewards
-        
         # Stability tracking
         self.consecutive_failures = 0
         self.max_consecutive_failures = 3
@@ -579,31 +575,23 @@ class OSTuningEnv(gym.Env):
         performance_reward = performance_score
         stability_reward = stability_score * 100.0  # Scale to similar magnitude
         
-        raw_reward = (
+        reward = (
             self.performance_weight * performance_reward +
             self.stability_weight * stability_reward
         )
         
-        # Apply reward smoothing to reduce fluctuations
-        self.reward_history.append(raw_reward)
-        if len(self.reward_history) > self.reward_smooth_window:
-            self.reward_history.pop(0)
-        
-        # Use smoothed reward for more stable learning
-        reward = np.mean(self.reward_history)
-        
         # Reset failure counter on success
         self.consecutive_failures = 0
         
-        # Track best configuration (use raw reward for fair comparison)
-        if raw_reward > self.best_reward:
-            self.best_reward = raw_reward
+        # Track best configuration
+        if reward > self.best_reward:
+            self.best_reward = reward
             self.best_config = params.copy()
             if self.verbose:
-                print(f"  🎯 New best reward: {raw_reward:.2f} (performance: {performance_score:.2f}, stability: {stability_score:.2f})")
+                print(f"  🎯 New best reward: {reward:.2f} (performance: {performance_score:.2f}, stability: {stability_score:.2f})")
         
         if self.verbose:
-            print(f"  Reward: {reward:.2f} (smoothed from {raw_reward:.2f})")
+            print(f"  Reward: {reward:.2f} (perf: {performance_reward:.2f}, stab: {stability_reward:.2f})")
             if self.baseline_reward:
                 improvement = ((performance_score - self.baseline_reward) / self.baseline_reward) * 100
                 print(f"  Improvement over baseline: {improvement:+.2f}%")
