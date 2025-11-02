@@ -301,10 +301,6 @@ class OSTuningEnv(gym.Env):
         Returns:
             (success, error_message)
         """
-        print(f"\n=== APPLYING PARAMETERS ===")
-        print(f"Parameters to apply: {params}")
-        print(f"Dry run mode: {self.dry_run}")
-        
         if self.dry_run:
             if self.verbose:
                 print("  [DRY RUN] Would apply parameters (not actually applying)")
@@ -331,7 +327,6 @@ class OSTuningEnv(gym.Env):
             # Apply using sysctl
             try:
                 cmd = ['sudo', 'sysctl', '-w', f'{param_name}={value}']
-                print(f"  Running: {' '.join(cmd)}")
                 
                 result = subprocess.run(
                     cmd,
@@ -340,13 +335,8 @@ class OSTuningEnv(gym.Env):
                     timeout=10
                 )
                 
-                print(f"  Return code: {result.returncode}")
-                print(f"  stdout: {result.stdout.strip()}")
-                print(f"  stderr: {result.stderr.strip()}")
-                
                 if result.returncode != 0:
                     error_msg = f"Failed to apply {param_name}: {result.stderr}"
-                    print(f"  ✗ {error_msg}")
                     return False, error_msg
                 
                 if self.verbose:
@@ -366,45 +356,32 @@ class OSTuningEnv(gym.Env):
         Returns:
             (reward, success, error_message)
         """
-        print(f"\n=== RUNNING BENCHMARK ===")
-        print(f"Benchmark command: {self.benchmark_command}")
-        timeout = self.training_config.get('benchmark_timeout', 120)
-        print(f"Timeout: {timeout}s")
-        
         if self.verbose:
             print(f"  Running benchmark: {self.benchmark_command}")
         
         try:
             start_time = time.time()
+            timeout = self.training_config.get('benchmark_timeout', 120)
             
             result = subprocess.run(
                 self.benchmark_command,
                 shell=True,
                 capture_output=True,
                 text=True,
-                timeout=self.training_config.get('benchmark_timeout', 120)
+                timeout=timeout
             )
             
             elapsed_time = time.time() - start_time
             
-            print(f"  Benchmark return code: {result.returncode}")
-            print(f"  Benchmark elapsed time: {elapsed_time:.2f}s")
-            print(f"  Benchmark stdout:\n{result.stdout}")
-            print(f"  Benchmark stderr:\n{result.stderr}")
-            
             if result.returncode != 0:
                 error_msg = f"Benchmark failed with exit code {result.returncode}: {result.stderr}"
-                print(f"  ✗ {error_msg}")
                 return None, False, error_msg
             
             # Parse output to extract reward metric
             reward = self._parse_reward_from_output(result.stdout)
             
-            print(f"  Parsed reward: {reward}")
-            
             if reward is None:
                 error_msg = f"Could not parse {self.reward_metric} from benchmark output"
-                print(f"  ✗ {error_msg}")
                 return None, False, error_msg
             
             if self.verbose:

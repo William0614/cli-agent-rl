@@ -103,18 +103,13 @@ def index():
 def get_data():
     """Get current training data as JSON."""
     with state_lock:
+        # Convert all numpy types to Python native types
         data = {
-            'steps': list(training_state['steps']),
-            'rewards': list(training_state['rewards']),
-            'performance': list(training_state['performance']),
-            'stability': list(training_state['stability']),
-            'episodes': list(training_state['episodes']),
-            'best_reward': float(training_state['best_reward']),
-            'best_config': training_state['best_config'],
-            'best_step': training_state['best_step'],
-            'is_training': training_state['is_training'],
-            'workload_name': training_state['workload_name'],
-            'param_names': training_state['param_names']
+            'steps': [int(x) for x in training_state['steps']],
+            'rewards': [float(x) for x in training_state['rewards']],
+            'episodes': [int(x) for x in training_state['episodes']],
+            'best_reward': float(training_state['best_reward']) if training_state['best_reward'] is not None else 0.0,
+            'is_training': bool(training_state['is_training'])
         }
         
         # Calculate statistics
@@ -125,8 +120,8 @@ def get_data():
             data['total_steps'] = int(training_state['steps'][-1])
             data['total_episodes'] = int(max(training_state['episodes']))
         else:
-            data['current_reward'] = 0
-            data['avg_reward'] = 0
+            data['current_reward'] = 0.0
+            data['avg_reward'] = 0.0
             data['total_steps'] = 0
             data['total_episodes'] = 0
         
