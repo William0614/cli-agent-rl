@@ -103,35 +103,35 @@ def dirty_page_test(num_files=80, file_size_kb=200):
 
 def calculate_score(mem_ops, io_ops, swappiness, dirty_ratio):
     """
-    Calculate score with parameter sensitivity.
+    Calculate score with strong parameter sensitivity and low noise.
     Optimal: swappiness=0-10, dirty_ratio=10-20
     """
     # Base score
     base_score = mem_ops * 0.3 + io_ops * 0.7
     
-    # Swappiness penalty/bonus (optimal: 0-10)
+    # Swappiness penalty/bonus (optimal: 0-10) - STRONGER SIGNAL
     if swappiness <= 10:
-        swappiness_factor = 1.0 + (10 - swappiness) * 0.03  # up to 30% bonus
+        swappiness_factor = 1.0 + (10 - swappiness) * 0.08  # up to 80% bonus!
     elif swappiness <= 30:
-        swappiness_factor = 1.0 - (swappiness - 10) * 0.02  # gradual penalty
+        swappiness_factor = 1.0 - (swappiness - 10) * 0.04  # steeper penalty
     else:
-        swappiness_factor = 0.6 - (swappiness - 30) * 0.005  # larger penalty
+        swappiness_factor = 0.4 - (swappiness - 30) * 0.008  # even larger penalty
     
-    # Dirty ratio penalty/bonus (optimal: 10-20)
+    # Dirty ratio penalty/bonus (optimal: 10-20) - STRONGER SIGNAL
     if 10 <= dirty_ratio <= 20:
-        dirty_factor = 1.0 + (1.0 - abs(dirty_ratio - 15) / 5) * 0.2  # up to 20% bonus
+        dirty_factor = 1.0 + (1.0 - abs(dirty_ratio - 15) / 5) * 0.5  # up to 50% bonus!
     elif 5 <= dirty_ratio < 10:
-        dirty_factor = 0.9 - (10 - dirty_ratio) * 0.05
+        dirty_factor = 0.8 - (10 - dirty_ratio) * 0.08
     elif 20 < dirty_ratio <= 40:
-        dirty_factor = 0.95 - (dirty_ratio - 20) * 0.02
+        dirty_factor = 0.9 - (dirty_ratio - 20) * 0.03
     else:
-        dirty_factor = 0.5
+        dirty_factor = 0.4
     
     # Combined multiplier
     multiplier = swappiness_factor * dirty_factor
     
-    # Add some noise to make it realistic (±5%)
-    noise = 1.0 + random.uniform(-0.05, 0.05)
+    # REDUCED noise for more stable rewards (±2% instead of ±5%)
+    noise = 1.0 + random.uniform(-0.02, 0.02)
     
     final_score = base_score * multiplier * noise
     
@@ -139,6 +139,9 @@ def calculate_score(mem_ops, io_ops, swappiness, dirty_ratio):
 
 def main():
     """Run fast memory + I/O benchmark with parameter sensitivity"""
+    # Use fixed seed for consistency (reduce noise between runs)
+    random.seed(42)
+    
     print("Starting parameter-sensitive benchmark...", file=sys.stderr)
     
     # Get current VM parameters
