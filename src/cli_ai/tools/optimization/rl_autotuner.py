@@ -240,14 +240,20 @@ class OSTuningEnv(gym.Env):
             param_name = param_config['param']
             current_value = SystemMetricsCollector.read_sysctl_param(param_name)
             
+            min_val = param_config['min']
+            max_val = param_config['max']
+            
             if current_value is not None:
-                self.default_params[param_name] = current_value
+                # Clamp to config range (system default might be outside our tuning range)
+                clamped_value = max(min_val, min(max_val, current_value))
+                self.default_params[param_name] = clamped_value
                 if self.verbose:
-                    print(f"  {param_name}: {current_value}")
+                    if clamped_value != current_value:
+                        print(f"  {param_name}: {current_value} (clamped to {clamped_value} for safety)")
+                    else:
+                        print(f"  {param_name}: {current_value}")
             else:
                 # Use midpoint of range as default if can't read
-                min_val = param_config['min']
-                max_val = param_config['max']
                 self.default_params[param_name] = (min_val + max_val) / 2
                 if self.verbose:
                     print(f"  {param_name}: Could not read, using midpoint {self.default_params[param_name]}")
