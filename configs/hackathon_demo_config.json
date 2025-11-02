@@ -1,21 +1,21 @@
 {
-  "workload_name": "hackathon-demo-network-server",
-  "reward_metric": "requests_per_second",
-  "benchmark_command": "python3 $(dirname $0)/../benchmarks/fast_network_bench.py",
+  "workload_name": "hackathon-demo-memory-optimization",
+  "reward_metric": "operations_per_second",
+  "benchmark_command": "python3 $(dirname $0)/../benchmarks/fast_memory_bench.py",
   "action_space": [
     {
-      "param": "net.core.somaxconn",
-      "min": 128,
-      "max": 4096,
+      "param": "vm.swappiness",
+      "min": 0,
+      "max": 100,
       "type": "int",
-      "description": "Maximum number of connection requests queued"
+      "description": "How aggressively kernel swaps memory pages"
     },
     {
-      "param": "net.ipv4.tcp_max_syn_backlog",
-      "min": 128,
-      "max": 4096,
+      "param": "vm.dirty_ratio",
+      "min": 5,
+      "max": 80,
       "type": "int",
-      "description": "Maximum SYN backlog queue length"
+      "description": "Percentage of system memory for dirty pages before writes"
     }
   ],
   "state_space": [
@@ -29,13 +29,13 @@
     }
   ],
   "training_config": {
-    "total_timesteps": 300,
+    "total_timesteps": 200,
     "n_steps": 64,
     "batch_size": 32,
     "n_epochs": 5,
     "learning_rate": 0.001,
     "gamma": 0.95,
-    "benchmark_timeout": 15,
+    "benchmark_timeout": 10,
     "max_steps_per_episode": 10
   }
 }
