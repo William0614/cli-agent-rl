@@ -1,7 +1,7 @@
 {
   "workload_name": "hackathon-demo-memory-optimization",
   "reward_metric": "operations_per_second",
-  "benchmark_command": "python3 $(dirname $0)/../benchmarks/fast_memory_bench.py",
+  "benchmark_command": "python3 benchmarks/fast_memory_bench.py",
   "action_space": [
     {
       "param": "vm.swappiness",
