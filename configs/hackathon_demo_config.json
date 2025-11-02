@@ -1,41 +1,48 @@
 {
-  "workload_name": "hackathon-demo-memory-optimization",
-  "reward_metric": "operations_per_second",
-  "benchmark_command": "python3 $(dirname $0)/../benchmarks/fast_memory_bench.py",
+  "workload_name": "hackathon-demo-simulated",
+  "reward_metric": "performance_score",
+  "benchmark_command": "python3 $(dirname $0)/../benchmarks/simulated_bench.py",
   "action_space": [
     {
-      "param": "vm.swappiness",
+      "param": "param_a",
       "min": 0,
       "max": 100,
       "type": "int",
-      "description": "How aggressively kernel swaps memory pages"
+      "description": "First optimization parameter"
     },
     {
-      "param": "vm.dirty_ratio",
-      "min": 5,
-      "max": 80,
+      "param": "param_b",
+      "min": 0,
+      "max": 100,
       "type": "int",
-      "description": "Percentage of system memory for dirty pages before writes"
+      "description": "Second optimization parameter"
+    },
+    {
+      "param": "param_c",
+      "min": 0,
+      "max": 100,
+      "type": "int",
+      "description": "Third optimization parameter"
     }
   ],
   "state_space": [
     {
       "metric": "cpu_usage",
-      "description": "Current CPU utilization percentage"
+      "description": "Current CPU utilization"
     },
     {
       "metric": "memory_used_percent",
-      "description": "Memory utilization percentage"
+      "description": "Memory utilization"
     }
   ],
   "training_config": {
-    "total_timesteps": 200,
+    "total_timesteps": 300,
     "n_steps": 64,
     "batch_size": 32,
     "n_epochs": 5,
     "learning_rate": 0.001,
     "gamma": 0.95,
-    "benchmark_timeout": 10,
-    "max_steps_per_episode": 10
+    "benchmark_timeout": 5,
+    "max_steps_per_episode": 15
   }
 }

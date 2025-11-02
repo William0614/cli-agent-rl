@@ -301,6 +301,10 @@ class OSTuningEnv(gym.Env):
         Returns:
             (success, error_message)
         """
+        print(f"\n=== APPLYING PARAMETERS ===")
+        print(f"Parameters to apply: {params}")
+        print(f"Dry run mode: {self.dry_run}")
+        
         if self.dry_run:
             if self.verbose:
                 print("  [DRY RUN] Would apply parameters (not actually applying)")
@@ -326,15 +330,24 @@ class OSTuningEnv(gym.Env):
             
             # Apply using sysctl
             try:
+                cmd = ['sudo', 'sysctl', '-w', f'{param_name}={value}']
+                print(f"  Running: {' '.join(cmd)}")
+                
                 result = subprocess.run(
-                    ['sudo', 'sysctl', '-w', f'{param_name}={value}'],
+                    cmd,
                     capture_output=True,
                     text=True,
                     timeout=10
                 )
                 
+                print(f"  Return code: {result.returncode}")
+                print(f"  stdout: {result.stdout.strip()}")
+                print(f"  stderr: {result.stderr.strip()}")
+                
                 if result.returncode != 0:
-                    return False, f"Failed to apply {param_name}: {result.stderr}"
+                    error_msg = f"Failed to apply {param_name}: {result.stderr}"
+                    print(f"  ✗ {error_msg}")
+                    return False, error_msg
                 
                 if self.verbose:
                     print(f"  ✓ Applied {param_name}={value}")
@@ -353,6 +366,10 @@ class OSTuningEnv(gym.Env):
         Returns:
             (reward, success, error_message)
         """
+        print(f"\n=== RUNNING BENCHMARK ===")
+        print(f"Benchmark command: {self.benchmark_command}")
+        print(f"Timeout: {self.benchmark_timeout}s")
+        
         if self.verbose:
             print(f"  Running benchmark: {self.benchmark_command}")
         
@@ -369,14 +386,25 @@ class OSTuningEnv(gym.Env):
             
             elapsed_time = time.time() - start_time
             
+            print(f"  Benchmark return code: {result.returncode}")
+            print(f"  Benchmark elapsed time: {elapsed_time:.2f}s")
+            print(f"  Benchmark stdout:\n{result.stdout}")
+            print(f"  Benchmark stderr:\n{result.stderr}")
+            
             if result.returncode != 0:
-                return None, False, f"Benchmark failed with exit code {result.returncode}: {result.stderr}"
+                error_msg = f"Benchmark failed with exit code {result.returncode}: {result.stderr}"
+                print(f"  ✗ {error_msg}")
+                return None, False, error_msg
             
             # Parse output to extract reward metric
             reward = self._parse_reward_from_output(result.stdout)
             
+            print(f"  Parsed reward: {reward}")
+            
             if reward is None:
-                return None, False, f"Could not parse {self.reward_metric} from benchmark output"
+                error_msg = f"Could not parse {self.reward_metric} from benchmark output"
+                print(f"  ✗ {error_msg}")
+                return None, False, error_msg
             
             if self.verbose:
                 print(f"  ✓ Benchmark completed in {elapsed_time:.2f}s: {self.reward_metric}={reward}")
@@ -618,23 +646,24 @@ class OSTuningEnv(gym.Env):
     def rollback(self):
         """Emergency rollback to default parameters."""
         if not self.default_params:
-            if self.verbose:
-                print("\nNo default parameters stored - skipping rollback")
-            return
+            return  # Nothing to restore
             
-        if self.verbose:
-            print("\nPerforming emergency rollback to default parameters...")
-        
-        success, error = self._apply_parameters(self.default_params)
-        
-        if not success:
-            # Silently ignore rollback errors in non-verbose mode
-            # (they're usually harmless, like trying to restore unsupported params)
-            if self.verbose:
-                print(f"Note: Some parameters couldn't be restored: {error}")
-        else:
-            if self.verbose:
-                print("✓ Rollback successful")
+        # Try to restore each parameter individually
+        # Don't fail if one parameter can't be restored
+        for param_name, value in self.default_params.items():
+            try:
+                if not self.dry_run:
+                    result = subprocess.run(
+                        ['sudo', 'sysctl', '-w', f'{param_name}={int(value)}'],
+                        capture_output=True,
+                        text=True,
+                        timeout=5
+                    )
+                    # Only print if verbose and failed
+                    if result.returncode != 0 and self.verbose:
+                        print(f"Note: Could not restore {param_name} (not critical)")
+            except Exception:
+                pass  # Silently ignore - rollback is best-effort
     
     def get_best_config(self) -> Tuple[Dict[str, float], float]:
         """Get the best configuration found so far."""
