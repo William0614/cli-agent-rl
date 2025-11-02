@@ -11,10 +11,10 @@ ssl._create_default_https_context = ssl._create_unverified_context
 from main import create_plan, execute_plan, summarize_plan_result, current_working_directory
 from terminal_bench.agents.base_agent import BaseAgent, AgentResult, FailureMode, TmuxSession
 
-class Jarvis(BaseAgent):
+class Euler(BaseAgent):
     @staticmethod
     def name() -> str:
-        return "GPT-5-Nano Jarvis"
+        return "GPT-5-Nano Euler"
 
     def perform_task(
         self,

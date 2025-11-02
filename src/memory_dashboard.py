@@ -125,7 +125,7 @@ class MemoryDashboard:
                                 current_content = []
                             current_role = 'user'
                             current_content = [line[5:].strip()]  # Remove "user:" prefix
-                        elif line.startswith('assistant:') or line.startswith('Assistant:') or line.startswith('Jarvis:'):
+                        elif line.startswith('assistant:') or line.startswith('Assistant:') or line.startswith('Euler:'):
                             if current_role and current_content:
                                 messages.append({
                                     'role': current_role,
@@ -135,7 +135,7 @@ class MemoryDashboard:
                                 current_content = []
                             current_role = 'assistant'
                             # Remove prefix
-                            for prefix in ['assistant:', 'Assistant:', 'Jarvis:']:
+                            for prefix in ['assistant:', 'Assistant:', 'Euler:']:
                                 if line.startswith(prefix):
                                     current_content = [line[len(prefix):].strip()]
                                     break

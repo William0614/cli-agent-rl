@@ -350,7 +350,7 @@ async def speak_text_openai(text: str):
         print("No text to speak.")
         return
 
-    print(f"Jarvis: {text}")
+    print(f"Euler: {text}")
     try:
         # Generate the audio stream from the text
         response = await get_client().audio.speech.create(

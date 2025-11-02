@@ -133,7 +133,7 @@ async def main():
             if voice_input_enabled:
                 await speak_text_openai(ai_response)
             else:
-                print(Fore.MAGENTA + f"Jarvis: {ai_response}")
+                print(Fore.MAGENTA + f"Euler: {ai_response}")
             
             # Add AI response and check for overflow after complete exchange
             ai_message = {
@@ -264,7 +264,7 @@ async def main():
                     if voice_input_enabled:
                         await speak_text_openai(final_response)
                     else:
-                        print(Fore.MAGENTA + f"Jarvis: {final_response}")
+                        print(Fore.MAGENTA + f"Euler: {final_response}")
                     
                     # Add final exchange to session memory
                     overflow = session_memory.add_exchange(user_input, final_response)
