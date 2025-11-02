@@ -1,6 +1,6 @@
-# Multimodal CLI Agent
+# Multimodal CLI Agent with RL Autotuner
 
-An intelligent command-line assistant with ReAct + Reflexion reasoning, voice input, vision capabilities, and sophisticated memory management.
+An intelligent command-line assistant with ReAct + Reflexion reasoning, voice input, vision capabilities, sophisticated memory management, and **SEAL-inspired Reinforcement Learning for OS optimization**.
 
 ## 🎬 Demo
 
@@ -13,6 +13,13 @@ https://github.com/user-attachments/assets/65cbcf74-d64e-4cb3-8485-dfcdce28988c
 - **Task Memory System**: Prevents redundant actions and maintains context across multi-step tasks
 - **Reflexion Engine**: Self-correcting AI with progress analysis and repetition detection
 - **Smart Tool Execution**: Intelligent tool selection with error recovery and validation
+
+### ** RL-based OS Optimization**
+- **SEAL-Inspired Autotuner**: Proximal Policy Optimization (PPO) for kernel parameter tuning
+- **Real-time Web Dashboard**: Live learning curves, performance metrics, and parameter tracking
+- **Benchmark-Driven**: Custom workload benchmarks for memory, network, and I/O optimization
+- **Safety Validation**: Automatic rollback and parameter validation for safe system tuning
+- **See [RL_README.md](RL_README.md) for detailed documentation**
 
 ### Vision & Image Processing
 - **Image Classification**: Multi-model support (VLM, DINOv3)
@@ -39,6 +46,7 @@ https://github.com/user-attachments/assets/65cbcf74-d64e-4cb3-8485-dfcdce28988c
 ## 📁 Project Structure
 
 ```
+```
 multimodal-cli-agent/
 ├── src/cli_ai/              # Main package
 │   ├── core/              
@@ -50,6 +58,10 @@ multimodal-cli-agent/
 │   ├── tools/              
 │   │   ├── executor.py      # Enhanced tool execution engine
 │   │   ├── tools.py
+│   │   ├── optimization/    # RL Autotuner
+│   │   │   ├── rl_autotuner.py       # PPO-based optimization
+│   │   │   ├── web_dashboard.py      # Real-time web visualization
+│   │   │   └── safety_validator.py   # Parameter validation
 │   │   ├── vision/          
 │   │   │   ├── similarity.py    # DINOv3 image clustering
 │   │   │   └── local_models.py  # Multi-model vision support
@@ -61,9 +73,18 @@ multimodal-cli-agent/
 │       ├── task_progress.py      # Progress analysis & loop prevention
 │       ├── database.py           # Enhanced vector storage
 │       └── os_helpers.py         # Cross-platform compatibility
+├── benchmarks/              # Workload benchmarks
+│   ├── fast_memory_bench.py      # Memory + I/O benchmark
+│   └── fast_network_bench.py     # Network performance benchmark
+├── configs/                 # RL configurations
+│   └── hackathon_demo_config.json
+├── templates/               # Web dashboard templates
+│   └── rl_dashboard.html
 ├── tests/                   
 ├── main.py                  # Application entry point
+├── RL_README.md             # RL documentation
 └── Configuration files...
+```
 ```
 
 ## 🛠️ Installation
@@ -117,6 +138,31 @@ $ python main.py
 > Hello! Can you help me organize my project files?
 
 I'd be happy to help organize your project files! Let me first see what files you have in your current directory...
+```
+
+### RL-based OS Optimization**
+```
+> Optimize my system's memory performance for high I/O workloads
+
+I'll use reinforcement learning to tune your kernel parameters for optimal memory performance...
+
+✓ Web dashboard started on http://0.0.0.0:5000
+  - Real-time learning curve
+  - Performance vs Stability
+  - Best configuration tracker
+
+[Training for 30 minutes...]
+
+================================================================================
+Optimization Complete!
+================================================================================
+Best Performance: 5772.53 ops/s
+Improvement: +624.11%
+
+Optimal Configuration:
+  vm.swappiness = 0
+  vm.dirty_ratio = 13
+================================================================================
 ```
 
 ### Advanced Image Sorting
@@ -216,7 +262,7 @@ AI: [Continues with recent context + RAG from vector storage]
 DEBUG_PROMPTS=true python main.py
 
 # Monitor system performance
-python memory_dashboard.py  # View memory usage statistics
+python src/memory_dashboard.py  # View memory usage statistics
 ```
 
 ### Adding New Tools
