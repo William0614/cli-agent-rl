@@ -5,7 +5,6 @@ sentence-transformers
 sounddevice
 numpy
 faiss-cpu
-# terminal-bench does not have a Python 3.11 compatible release on PyPI, you may need to remove it or install from source
 aiofiles
 torch
 torchaudio
@@ -14,9 +13,8 @@ Pillow
 scipy
 torchvision
 openai
-
-# SEAL-inspired RL Optimization dependencies
 gymnasium
 stable-baselines3
 py-cpuinfo
-matplotlib  # For real-time visualization dashboard
+matplotlib
+flask

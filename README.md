@@ -14,8 +14,8 @@ https://github.com/user-attachments/assets/65cbcf74-d64e-4cb3-8485-dfcdce28988c
 - **Reflexion Engine**: Self-correcting AI with progress analysis and repetition detection
 - **Smart Tool Execution**: Intelligent tool selection with error recovery and validation
 
-### ** RL-based OS Optimization**
-- **SEAL-Inspired Autotuner**: Proximal Policy Optimization (PPO) for kernel parameter tuning
+### ** LLM + RL OS Optimization**
+- **Autotuner**: Proximal Policy Optimization (PPO) for kernel parameter tuning
 - **Real-time Web Dashboard**: Live learning curves, performance metrics, and parameter tracking
 - **Benchmark-Driven**: Custom workload benchmarks for memory, network, and I/O optimization
 - **Safety Validation**: Automatic rollback and parameter validation for safe system tuning

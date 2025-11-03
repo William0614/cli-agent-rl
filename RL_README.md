@@ -1,13 +1,13 @@
-# RL-based OS Optimization System
+# LLM + RL integrated OS Optimization System
 
-A SEAL-inspired Reinforcement Learning autotuner for kernel parameter optimization, integrated into the multimodal CLI agent.
+A LLM + Reinforcement Learning autotuner for kernel parameter optimization, integrated into the multimodal CLI agent.
 
 ## 🎯 Overview
 
-This system uses **Proximal Policy Optimization (PPO)** to automatically discover optimal operating system kernel parameter configurations for specific workloads. Inspired by Microsoft's SEAL framework, it treats OS tuning as a reinforcement learning problem where:
+This system uses **Proximal Policy Optimization (PPO)** to automatically discover optimal operating system kernel parameter configurations for specific workloads.
 
 - **Agent**: PPO neural network learning optimal parameter values
-- **Environment**: Your operating system with configurable kernel parameters
+- **Environment**: Operating system with configurable kernel parameters
 - **Actions**: Setting kernel parameters (e.g., `vm.swappiness`, `vm.dirty_ratio`)
 - **Rewards**: Performance metrics from workload benchmarks
 - **Goal**: Maximize workload performance while maintaining system stability
