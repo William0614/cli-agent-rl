@@ -1,6 +1,6 @@
-# OpenEuler Multimodal CLI Agent with RL Autotuner
+# Multimodal CLI Agent with RL Autotuner
 
-An intelligent command-line assistant with ReAct + Reflexion reasoning, voice input, vision capabilities, sophisticated memory management, and **SEAL-inspired Reinforcement Learning for OS optimization**.
+An intelligent command-line assistant with ReAct + Reflexion reasoning, voice input, vision capabilities, sophisticated memory management, and **Reinforcement Learning for OS optimization**.
 
 ## 🎬 Demo
 

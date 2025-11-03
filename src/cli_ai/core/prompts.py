@@ -265,7 +265,7 @@ When the user wants to optimize system performance for a specific workload (data
    - `workload_description`: The user's workload description
    - `config_json`: A JSON string containing the complete optimization configuration
    
-3. **Generating config_json**: You MUST act as an expert openEuler system administrator and generate:
+3. **Generating config_json**: You MUST act as an expert system administrator and generate:
    - workload_name: Descriptive name
    - reward_metric: Performance metric to maximize (e.g., "transactions_per_second")
    - benchmark_command: Shell command to measure performance
@@ -570,11 +570,10 @@ def get_final_summary_system_prompt():
 def get_optimization_strategy_prompt(workload_description: str) -> str:
     """
     Generates a prompt for the LLM to create an optimization strategy configuration.
-    
-    This prompt instructs the LLM to act as an expert openEuler system administrator
+    This prompt instructs the LLM to act as an expert system administrator
     and generate a JSON configuration for the RL autotuner based on the user's workload description.
     """
-    return f"""You are an expert openEuler system administrator and performance engineer specializing in kernel parameter tuning.
+    return f"""You are an expert system administrator and performance engineer specializing in kernel parameter tuning.
 
 The user wants to optimize their system for the following workload:
 **"{workload_description}"**
