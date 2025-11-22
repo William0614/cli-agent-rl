@@ -642,11 +642,13 @@ Your task is to generate a complete JSON configuration for the RL autotuner. Thi
    **benchmark_command**: 
    - PREFER using the pre-built benchmarks in /benchmarks/ directory (faster and more reliable)
    - Available built-in benchmarks:
-     * Memory/I/O workloads: `python3 benchmarks/fast_memory_bench.py` (outputs "operations_per_second")
-     * Network workloads: `python3 benchmarks/fast_network_bench.py` (outputs "requests_per_second")
+     * Memory/I/O workloads: `python3 benchmarks/fast_memory_bench.py` 
+       → MUST use reward_metric: "operations_per_second"
+     * Network workloads: `python3 benchmarks/fast_network_bench.py`
+       → MUST use reward_metric: "requests_per_second" (NOT throughput_mbps!)
    - These complete in 10-15 seconds and are designed for RL optimization
    - Only use external tools (pgbench, wrk, sysbench, ab) if you're sure they're installed
-   - Output must contain the reward_metric value
+   - The reward_metric MUST EXACTLY match what the benchmark outputs
    - Examples of external tools (use only if needed):
      * Database: `pgbench -c 50 -j 4 -T 30 testdb`
      * Web: `wrk -t4 -c100 -d30s http://localhost/`
@@ -721,10 +723,10 @@ Your task is to generate a complete JSON configuration for the RL autotuner. Thi
    }}
    ```
    
-   **IMPORTANT for Network Workloads**: 
-   - Use \"requests_per_second\" as the reward_metric (NOT \"throughput_mbps\")
-   - Only use numeric integer parameters
-   - AVOID string parameters like net.ipv4.tcp_congestion_control (not supported)
+   **CRITICAL for fast_network_bench.py**: 
+   - reward_metric MUST be "requests_per_second" (this is what the benchmark outputs)
+   - DO NOT use "throughput_mbps" or any other metric name
+   - Only use numeric integer parameters (no string params)
 
    **HPC/Compute:**
    ```json
