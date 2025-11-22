@@ -672,11 +672,13 @@ class RLProgressCallback(BaseCallback):
         # Get info from the last step
         info = self.locals.get('infos', [{}])[0]
         
+        # Always try to update dashboard, even with minimal info
+        reward = self.locals.get('rewards', [0])[0]
+        episode = self.env.episode_num
+        
         if 'performance_score' in info and 'stability_score' in info:
-            reward = self.locals.get('rewards', [0])[0]
             performance = info['performance_score']
             stability = info['stability_score']
-            episode = self.env.episode_num
             params = info.get('params', {})
             
             # Update web dashboard if available (priority)
@@ -684,10 +686,10 @@ class RLProgressCallback(BaseCallback):
                 try:
                     self.web_dashboard.add_data_point(
                         step=self.step_count,
-                        reward=reward,
-                        performance=performance,
-                        stability=stability,
-                        episode=episode,
+                        reward=float(reward),
+                        performance=float(performance),
+                        stability=float(stability),
+                        episode=int(episode),
                         params=params
                     )
                 except Exception as e:
@@ -723,6 +725,22 @@ class RLProgressCallback(BaseCallback):
                 except Exception as e:
                     if self.verbose > 0:
                         print(f"Console tracker error: {e}")
+        else:
+            # No performance data - benchmark might be failing
+            # Still update dashboard with basic info
+            if self.web_dashboard is not None and self.step_count % 10 == 0:
+                try:
+                    self.web_dashboard.add_data_point(
+                        step=self.step_count,
+                        reward=float(reward),
+                        performance=0.0,
+                        stability=0.0,
+                        episode=int(episode),
+                        params={}
+                    )
+                except Exception as e:
+                    if self.verbose > 0:
+                        print(f"Web dashboard basic update error: {e}")
         
         return True
     

@@ -88,6 +88,7 @@ class WebDashboard:
                 training_state['best_reward'] = reward
                 training_state['best_config'] = params.copy()
                 training_state['best_step'] = step
+                print(f"[Dashboard] New best! Step {step}, Reward: {reward:.2f}", flush=True)
     
     def stop(self):
         """Mark training as stopped and complete."""
