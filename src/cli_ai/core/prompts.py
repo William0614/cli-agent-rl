@@ -267,8 +267,11 @@ When the user wants to optimize system performance for a specific workload (data
    
 3. **Generating config_json**: You MUST act as an expert system administrator and generate:
    - workload_name: Descriptive name
-   - reward_metric: Performance metric to maximize (e.g., "transactions_per_second")
+   - reward_metric: Performance metric to maximize (e.g., "requests_per_second", "operations_per_second")
    - benchmark_command: Shell command to measure performance
+     * PREFER built-in benchmarks: `python3 benchmarks/fast_memory_bench.py` or `python3 benchmarks/fast_network_bench.py`
+     * These are fast (10-15s), reliable, and designed for RL optimization
+     * Only use external tools (pgbench, wrk, ab) if you're certain they're installed
    - action_space: Kernel parameters to tune with safe min/max ranges
    - state_space: System metrics to observe (cpu_utilization, io_wait, mem_utilization)
    - training_config: RL hyperparameters
@@ -637,10 +640,14 @@ Your task is to generate a complete JSON configuration for the RL autotuner. Thi
    - Use simple names that can be parsed from benchmark stdout
    
    **benchmark_command**: 
-   - Must be a real, executable command
-   - Should complete in reasonable time (30-120 seconds)
+   - PREFER using the pre-built benchmarks in /benchmarks/ directory (faster and more reliable)
+   - Available built-in benchmarks:
+     * Memory/I/O workloads: `python3 benchmarks/fast_memory_bench.py` (outputs "operations_per_second")
+     * Network workloads: `python3 benchmarks/fast_network_bench.py` (outputs "requests_per_second")
+   - These complete in 10-15 seconds and are designed for RL optimization
+   - Only use external tools (pgbench, wrk, sysbench, ab) if you're sure they're installed
    - Output must contain the reward_metric value
-   - Examples:
+   - Examples of external tools (use only if needed):
      * Database: `pgbench -c 50 -j 4 -T 30 testdb`
      * Web: `wrk -t4 -c100 -d30s http://localhost/`
      * CPU: `sysbench cpu --time=30 run`
@@ -678,17 +685,38 @@ Your task is to generate a complete JSON configuration for the RL autotuner. Thi
    }}
    ```
 
-   **Nginx Web Server:**
+   **Memory/I/O Intensive Workload:**
    ```json
    {{
-     "workload_name": "Nginx High-Concurrency HTTP",
-     "reward_metric": "requests_per_second",
-     "benchmark_command": "ab -n 10000 -c 200 http://localhost/ 2>&1 | grep 'Requests per second'",
+     "workload_name": "Memory and File I/O Intensive",
+     "reward_metric": "operations_per_second",
+     "benchmark_command": "python3 benchmarks/fast_memory_bench.py",
      "action_space": [
-       {{"param": "net.core.somaxconn", "min": 128, "max": 8192, "type": "int"}},
-       {{"param": "net.ipv4.tcp_max_syn_backlog", "min": 128, "max": 8192, "type": "int"}},
-       {{"param": "net.core.netdev_max_backlog", "min": 1000, "max": 50000, "type": "int"}}
-     ]
+       {{"param": "vm.swappiness", "min": 0, "max": 100, "type": "int"}},
+       {{"param": "vm.dirty_ratio", "min": 5, "max": 80, "type": "int"}}
+     ],
+     "training_config": {{
+       "total_timesteps": 200,
+       "benchmark_timeout": 20
+     }}
+   }}
+   ```
+
+   **Network/Web Server Workload:**
+   ```json
+   {{
+     "workload_name": "Network High-Concurrency HTTP",
+     "reward_metric": "requests_per_second",
+     "benchmark_command": "python3 benchmarks/fast_network_bench.py",
+     "action_space": [
+       {{"param": "net.core.somaxconn", "min": 128, "max": 4096, "type": "int"}},
+       {{"param": "net.ipv4.tcp_max_syn_backlog", "min": 128, "max": 4096, "type": "int"}},
+       {{"param": "net.core.netdev_max_backlog", "min": 1000, "max": 10000, "type": "int"}}
+     ],
+     "training_config": {{
+       "total_timesteps": 200,
+       "benchmark_timeout": 20
+     }}
    }}
    ```
 
