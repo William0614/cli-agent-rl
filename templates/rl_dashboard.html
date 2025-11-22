@@ -243,6 +243,26 @@
             </div>
             
             <div class="card full-width">
+                <h2>⚙️ Optimization Configuration</h2>
+                <div class="best-config">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <strong>Reward Metric:</strong> <span id="config-metric">-</span><br>
+                            <strong>Benchmark:</strong> <code id="config-benchmark" style="font-size: 0.9em;">-</code><br>
+                            <strong>Total Timesteps:</strong> <span id="config-timesteps">-</span><br>
+                            <strong>Learning Rate:</strong> <span id="config-lr">-</span>
+                        </div>
+                        <div>
+                            <strong>Tuning Parameters:</strong>
+                            <ul id="config-params" class="param-list" style="margin-top: 5px;">
+                                <li>Loading...</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card full-width">
                 <h2>🎯 Best Configuration</h2>
                 <div class="best-config">
                     <h3>Step: <span id="best-step">0</span> | Reward: <span id="best-reward-value">0.00</span></h3>
@@ -283,6 +303,24 @@
                     document.getElementById('current-reward').textContent = data.current_reward.toFixed(2);
                     document.getElementById('best-reward').textContent = data.best_reward.toFixed(2);
                     document.getElementById('runtime').textContent = data.runtime;
+                    
+                    // Update config panel
+                    if (data.config) {
+                        document.getElementById('config-metric').textContent = data.config.reward_metric;
+                        document.getElementById('config-benchmark').textContent = data.config.benchmark_command;
+                        document.getElementById('config-timesteps').textContent = data.config.total_timesteps;
+                        document.getElementById('config-lr').textContent = data.config.learning_rate;
+                        
+                        const configParamsList = document.getElementById('config-params');
+                        if (data.config.action_space && data.config.action_space.length > 0) {
+                            configParamsList.innerHTML = '';
+                            data.config.action_space.forEach(p => {
+                                const li = document.createElement('li');
+                                li.textContent = `${p.param} [${p.min}-${p.max}]`;
+                                configParamsList.appendChild(li);
+                            });
+                        }
+                    }
                     
                     // Update training status
                     const indicator = document.getElementById('training-indicator');

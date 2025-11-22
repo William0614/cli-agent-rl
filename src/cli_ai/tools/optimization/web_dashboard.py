@@ -52,17 +52,19 @@ training_state = {
     'training_complete': False,  # New flag to stop updates
     'start_time': None,
     'workload_name': '',
-    'param_names': []
+    'param_names': [],
+    'config': {}  # Store full optimization config
 }
 
 class WebDashboard:
     """Web-based dashboard for RL training visualization."""
     
-    def __init__(self, workload_name: str = "", param_names: list = None):
+    def __init__(self, workload_name: str = "", param_names: list = None, config: dict = None):
         global training_state
         with state_lock:
             training_state['workload_name'] = workload_name
             training_state['param_names'] = param_names or []
+            training_state['config'] = config or {}
             training_state['start_time'] = datetime.now()
             training_state['is_training'] = True
     
@@ -117,9 +119,22 @@ def get_data():
             'rewards': [float(x) for x in training_state['rewards']],
             'episodes': [int(x) for x in training_state['episodes']],
             'best_reward': float(training_state['best_reward']) if training_state['best_reward'] is not None else 0.0,
+            'best_config': training_state['best_config'],
             'is_training': bool(training_state['is_training']),
-            'training_complete': bool(training_state['training_complete'])
+            'training_complete': bool(training_state['training_complete']),
+            'workload_name': training_state['workload_name'],
+            'param_names': training_state['param_names']
         }
+        
+        # Add config info
+        if training_state['config']:
+            data['config'] = {
+                'reward_metric': training_state['config'].get('reward_metric', 'N/A'),
+                'benchmark_command': training_state['config'].get('benchmark_command', 'N/A'),
+                'total_timesteps': training_state['config'].get('training_config', {}).get('total_timesteps', 0),
+                'learning_rate': training_state['config'].get('training_config', {}).get('learning_rate', 0),
+                'action_space': training_state['config'].get('action_space', [])
+            }
         
         # Calculate statistics
         if len(training_state['rewards']) > 0:
@@ -283,7 +298,7 @@ def plot_episode_rewards():
 
 def run_dashboard_server(host='0.0.0.0', port=5000):
     """Run the dashboard web server."""
-    app.run(host=host, port=port, threaded=True, debug=False)
+    app.run(host=host, port=port, threaded=True, debug=True)
 
 
 # For standalone testing

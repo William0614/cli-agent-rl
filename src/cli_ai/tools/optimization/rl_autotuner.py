@@ -841,7 +841,8 @@ def run_rl_optimization(config_path: str, dry_run: bool = False, verbose: bool =
             param_names = [p['param'] for p in config['action_space']]
             web_dashboard = WebDashboard(
                 workload_name=config['workload_name'],
-                param_names=param_names
+                param_names=param_names,
+                config=config
             )
             
             # Start Flask server in background thread
