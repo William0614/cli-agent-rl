@@ -711,7 +711,8 @@ Your task is to generate a complete JSON configuration for the RL autotuner. Thi
      "action_space": [
        {{"param": "net.core.somaxconn", "min": 128, "max": 4096, "type": "int"}},
        {{"param": "net.ipv4.tcp_max_syn_backlog", "min": 128, "max": 4096, "type": "int"}},
-       {{"param": "net.core.netdev_max_backlog", "min": 1000, "max": 10000, "type": "int"}}
+       {{"param": "net.core.netdev_max_backlog", "min": 1000, "max": 10000, "type": "int"}},
+       {{"param": "net.ipv4.tcp_fin_timeout", "min": 15, "max": 120, "type": "int"}}
      ],
      "training_config": {{
        "total_timesteps": 200,
@@ -719,6 +720,11 @@ Your task is to generate a complete JSON configuration for the RL autotuner. Thi
      }}
    }}
    ```
+   
+   **IMPORTANT for Network Workloads**: 
+   - Use \"requests_per_second\" as the reward_metric (NOT \"throughput_mbps\")
+   - Only use numeric integer parameters
+   - AVOID string parameters like net.ipv4.tcp_congestion_control (not supported)
 
    **HPC/Compute:**
    ```json

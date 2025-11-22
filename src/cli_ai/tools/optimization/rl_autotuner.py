@@ -131,7 +131,7 @@ class SystemMetricsCollector:
     
     @staticmethod
     def read_sysctl_param(param_name: str) -> Optional[float]:
-        """Read current value of a kernel parameter."""
+        """Read current value of a kernel parameter (returns None for non-numeric values)."""
         try:
             result = subprocess.run(
                 ['sysctl', '-n', param_name],
@@ -140,7 +140,12 @@ class SystemMetricsCollector:
                 timeout=5
             )
             if result.returncode == 0:
-                return float(result.stdout.strip())
+                value_str = result.stdout.strip()
+                try:
+                    return float(value_str)
+                except ValueError:
+                    # Skip non-numeric values (e.g., "cubic" for tcp_congestion_control)
+                    return None
         except Exception as e:
             print(f"Warning: Failed to read sysctl {param_name}: {e}", file=sys.stderr)
         return None
