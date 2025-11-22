@@ -298,7 +298,9 @@ def plot_episode_rewards():
 
 def run_dashboard_server(host='0.0.0.0', port=5000):
     """Run the dashboard web server."""
-    app.run(host=host, port=port, threaded=True, debug=True)
+    # Note: debug=False because this runs in a background thread
+    # Debug mode requires signals which only work in main thread
+    app.run(host=host, port=port, threaded=True, debug=False)
 
 
 # For standalone testing
