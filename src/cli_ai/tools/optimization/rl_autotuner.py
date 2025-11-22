@@ -19,6 +19,7 @@ import time
 import re
 import os
 import sys
+import platform
 from typing import Dict, List, Tuple, Any, Optional
 from pathlib import Path
 from datetime import datetime
@@ -320,7 +321,8 @@ class OSTuningEnv(gym.Env):
             
             # Apply using sysctl
             try:
-                cmd = ['sudo', 'sysctl', '-w', f'{param_name}={value}']
+                # Use sudo -n (non-interactive) to fail fast if password required
+                cmd = ['sudo', '-n', 'sysctl', '-w', f'{param_name}={value}']
                 
                 result = subprocess.run(
                     cmd,
@@ -331,6 +333,13 @@ class OSTuningEnv(gym.Env):
                 
                 if result.returncode != 0:
                     error_msg = f"Failed to apply {param_name}: {result.stderr}"
+                    # Check if it's a sudo password issue
+                    if "sudo: a password is required" in result.stderr or "sudo: no tty present" in result.stderr:
+                        error_msg += "\n\n⚠️  SUDO PASSWORD REQUIRED ⚠️"
+                        error_msg += "\nThe RL optimizer needs passwordless sudo access."
+                        error_msg += "\nTo fix this, run on your openEuler VM:"
+                        error_msg += "\n  echo '$(whoami) ALL=(ALL) NOPASSWD: /usr/sbin/sysctl' | sudo tee /etc/sudoers.d/rl-optimizer"
+                        error_msg += "\n  sudo chmod 440 /etc/sudoers.d/rl-optimizer"
                     return False, error_msg
                 
                 if self.verbose:
@@ -758,6 +767,36 @@ def run_rl_optimization(config_path: str, dry_run: bool = False, verbose: bool =
         if key not in config:
             print(f"ERROR: Missing required config key: {key}", file=sys.stderr)
             return {'success': False, 'error': f'Missing key: {key}'}
+    
+    # Check sudo access (critical for RL optimization)
+    if not dry_run:
+        print("Checking sudo access for sysctl...", file=sys.stderr)
+        try:
+            test_result = subprocess.run(
+                ['sudo', '-n', 'sysctl', 'vm.swappiness'],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if test_result.returncode != 0:
+                error_msg = "\n" + "="*80 + "\n"
+                error_msg += "⚠️  SUDO ACCESS REQUIRED ⚠️\n"
+                error_msg += "="*80 + "\n"
+                error_msg += "The RL optimizer needs passwordless sudo for sysctl.\n"
+                error_msg += "Without this, the system will hang waiting for password.\n\n"
+                error_msg += "To fix this on your openEuler VM, run:\n"
+                error_msg += f"  echo '$(whoami) ALL=(ALL) NOPASSWD: /usr/sbin/sysctl' | sudo tee /etc/sudoers.d/rl-optimizer\n"
+                error_msg += f"  sudo chmod 440 /etc/sudoers.d/rl-optimizer\n\n"
+                error_msg += "Then verify with: sudo -n sysctl vm.swappiness\n"
+                error_msg += "="*80
+                print(error_msg, file=sys.stderr)
+                return {'success': False, 'error': 'Sudo access not configured. See error message above.'}
+            print("✓ Sudo access verified\n", file=sys.stderr)
+        except subprocess.TimeoutExpired:
+            print("ERROR: Sudo check timed out (likely waiting for password)", file=sys.stderr)
+            return {'success': False, 'error': 'Sudo access check timed out'}
+        except Exception as e:
+            print(f"Warning: Could not verify sudo access: {e}", file=sys.stderr)
     
     # Create environment
     try:

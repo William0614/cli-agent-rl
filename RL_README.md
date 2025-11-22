@@ -63,6 +63,24 @@ RL Autotuner System
 
 ## 🔧 How It Works
 
+### 0. **Prerequisites (IMPORTANT!)**
+⚠️ **The RL optimizer requires passwordless sudo access for `sysctl` commands.**
+
+On your **openEuler VM**, run:
+```bash
+# Add passwordless sudo for sysctl (needed for RL parameter tuning)
+echo "$(whoami) ALL=(ALL) NOPASSWD: /usr/sbin/sysctl" | sudo tee /etc/sudoers.d/rl-optimizer
+sudo chmod 440 /etc/sudoers.d/rl-optimizer
+
+# Verify it works (should not prompt for password)
+sudo -n sysctl vm.swappiness
+```
+
+**Why this is needed:**
+- The RL agent modifies kernel parameters hundreds of times during training
+- Each modification requires `sudo sysctl -w param=value`
+- Without passwordless sudo, the system will **hang waiting for password input**
+
 ### 1. **Environment Setup**
 The system creates a Gymnasium environment that:
 - Reads current kernel parameter values (baseline)
